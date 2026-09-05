@@ -37,7 +37,7 @@ def abstention(reason: str, elapsed_ms: float) -> AskResult:
 
     return AskResult(
         status="abstain",
-        answer="The available corpus does not contain sufficient evidence to answer this question.",
+        answer="当前语料库没有足够证据回答这个问题。",
         reason=reason,
         citations=[],
         evidence=[],

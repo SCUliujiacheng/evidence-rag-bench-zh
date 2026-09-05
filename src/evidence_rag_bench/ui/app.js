@@ -5,6 +5,10 @@ const answer = document.querySelector("#answer");
 const reason = document.querySelector("#reason");
 const latency = document.querySelector("#latency");
 const evidence = document.querySelector("#evidence");
+const reasonLabels = {
+  insufficient_evidence: "检索到的证据不足",
+  citation_validation_failed: "引用校验失败",
+};
 
 function element(tag, text) {
   const node = document.createElement(tag);
@@ -24,16 +28,18 @@ form.addEventListener("submit", async (event) => {
   result.hidden = false;
   evidence.replaceChildren();
   if (!response.ok) {
-    status.textContent = "Request failed";
-    answer.textContent = body.detail || "The service could not process this question.";
+    status.textContent = "请求失败";
+    answer.textContent = body.detail || "服务暂时无法处理这个问题。";
     reason.textContent = "";
     latency.textContent = "";
     return;
   }
-  status.textContent = body.status === "answer" ? "ANSWER WITH EVIDENCE" : "ABSTAINED";
+  status.textContent = body.status === "answer" ? "已基于证据回答" : "已拒答";
   answer.textContent = body.answer;
-  reason.textContent = body.reason ? `Reason: ${body.reason}` : "";
-  latency.textContent = `Latency: ${body.latency_ms.toFixed(1)} ms`;
+  reason.textContent = body.reason
+    ? `原因：${reasonLabels[body.reason] || body.reason}`
+    : "";
+  latency.textContent = `延迟：${body.latency_ms.toFixed(1)} ms`;
   body.evidence.forEach((item) => {
     const card = document.createElement("article");
     card.className = "evidence-card";
@@ -41,7 +47,7 @@ form.addEventListener("submit", async (event) => {
     card.append(element("p", item.text));
     const link = document.createElement("a");
     link.href = item.source_url;
-    link.textContent = "Open source";
+    link.textContent = "打开来源";
     link.target = "_blank";
     link.rel = "noreferrer";
     card.append(link);

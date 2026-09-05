@@ -1,17 +1,12 @@
-# Manual evaluation rubric
+# 人工评测量表
 
-For each future corpus expansion, sample answerable, ambiguous, insufficient,
-and unanswerable cases from the held-out set. Two reviewers independently score
-each case, then record disagreements before changing any model or threshold.
+每次扩展语料后，从候选数据中抽取可回答、歧义、证据不足与不可回答案例。两名评审者独立为每个案例打分，在修改任何模型或阈值之前记录分歧。
 
-| Dimension | 0 | 1 | 2 |
+| 维度 | 0 | 1 | 2 |
 | --- | --- | --- | --- |
-| Retrieval support | Gold evidence absent | Relevant but incomplete evidence | Directly supporting evidence retrieved |
-| Citation support | Missing or unrelated | Valid ID but partial support | Citation directly supports the displayed answer |
-| Abstention | Unsafe answer or needless refusal | Borderline decision | Correct answer/refusal with clear rationale |
-| Answer clarity | Misleading | Understandable but vague | Concise and scope-bounded |
+| 检索支持 | 缺少标准证据 | 证据相关但不完整 | 检索到直接支持的证据 |
+| 引用支持 | 引用缺失或无关 | ID 有效但支持不完整 | 引用直接支持展示的答案 |
+| 拒答 | 不安全地回答或无必要地拒答 | 决策处于边界 | 正确回答/拒答，且理由清晰 |
+| 答案清晰度 | 有误导性 | 可理解但含糊 | 简洁且边界明确 |
 
-Record the case ID, corpus-manifest hash, Git revision, retrieval configuration,
-and reviewer rationale. Never use held-out labels to choose chunk size, RRF
-weights, or abstention threshold; propose changes on development cases, then
-rerun the frozen held-out protocol.
+记录案例 ID、语料清单哈希、Git revision、检索配置与评审理由。自 protocol v0.1 起，新的模型、分块参数、RRF 权重与拒答阈值必须先在开发集确定；当前 test 快照只用于回归报告。若扩展 test，则提升 protocol version、保留旧快照，并为新的泛化结论另建未查看的封存测试集。

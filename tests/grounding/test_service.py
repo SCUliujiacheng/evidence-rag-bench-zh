@@ -21,6 +21,7 @@ def test_low_retrieval_score_abstains() -> None:
 
     assert result.status == "abstain"
     assert result.reason == "insufficient_evidence"
+    assert result.answer == "当前语料库没有足够证据回答这个问题。"
     assert result.citations == []
 
 

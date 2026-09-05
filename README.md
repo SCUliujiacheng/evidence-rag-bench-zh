@@ -1,27 +1,49 @@
-# Evidence RAG Bench
+# Evidence RAG Bench｜证据驱动的 RAG 评测基准
 
-An evaluation-first, evidence-grounded RAG reference implementation. It validates corpus provenance, compares BM25/TF-IDF/RRF-hybrid retrieval, checks citation IDs against returned evidence, and abstains when evidence is insufficient.
+**简体中文** | [English](https://github.com/SCUliujiacheng/evidence-rag-bench)
 
-## Why this is useful
+[![CI](https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml/badge.svg)](https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml)
 
-- **Reproducible evidence:** 15 license-attributed source documents are hash-locked before deterministic chunking.
-- **Measured retrieval:** a held-out 25-case protocol (21 evidence-labelled cases) compares lexical, hybrid, and optional local semantic ranking.
-- **Grounded behavior:** every citation is checked against the evidence returned to the caller; low-confidence requests return a structured abstention.
-- **Inspectable delivery:** reports retain the configuration, manifest hash, Git revision, metrics, latency, and per-case traces.
+一个以评测为先、以证据为边界的 RAG 参考实现。项目校验语料来源，比较 BM25、TF-IDF、RRF Hybrid 与可选 CrossEncoder 重排，并保证每个返回引用都能在证据列表中找到；证据不足时，系统会明确拒答。
 
-On the current held-out test split at `k=3`, RRF hybrid reaches **0.90 Recall@3** and **0.73 nDCG@3**. The optional local CrossEncoder reaches **0.74 MRR@3** and **0.77 nDCG@3**; it improves ranking quality but is deliberately documented as a relevance model, not an entailment verifier. See the [full protocol and results](docs/benchmark-results.md).
+![Evidence RAG Bench 中文演示界面](docs/screenshots/evidence-viewer-zh.png)
 
-## Architecture
+## 面试官 3 分钟速览
 
-[Open the interactive architecture](docs/architecture/evidence-rag-bench-architecture.html) for the request, retrieval, grounding, and evaluation paths. The checked-in specification lives beside it in [JSON](docs/architecture/evidence-rag-bench.architecture.json).
+| 要看什么 | 本项目给出的证据 |
+| --- | --- |
+| 问题定义 | RAG 不只要“能回答”，还要能复现检索结果、校验引用，并在证据不足时安全拒答。 |
+| 数据协议 | 15 份带许可证、SHA-256 哈希锁定的英文技术文档；开发集（dev）与固定测试集（test）各 25 条，每组含 21 条证据标注与 4 条歧义/域外问题。拒答阈值只用开发集校准。 |
+| 检索系统 | 同一分块上比较 BM25、词级 + 双词组 TF-IDF、RRF Hybrid；可选本地 `cross-encoder/ms-marco-MiniLM-L6-v2` 重排 Hybrid 的前 10 个候选。 |
+| 可信约束 | `answer` 的引用 ID 必须属于返回的证据；低置信度返回结构化 `abstain`。报告记录语料清单哈希、Git revision、配置、延迟与逐样本轨迹。 |
+| 工程交付 | FastAPI API、浏览器演示、可复现 CLI、pytest/ruff CI、机器可读 JSON 报告与可交互架构图。 |
+
+### 当前测试集快照结果（protocol v0.1，`k=3`）
+
+| 检索器 | Recall@3 | MRR@3 | nDCG@3 |
+| --- | ---: | ---: | ---: |
+| BM25 | **0.90** | 0.66 | 0.72 |
+| TF-IDF (word + bigram) | 0.86 | 0.62 | 0.68 |
+| RRF Hybrid | **0.90** | 0.67 | 0.73 |
+| Hybrid + MiniLM CrossEncoder re-rank | 0.86 | **0.74** | **0.77** |
+
+RRF Hybrid 在 Recall@3 上与 BM25 同为 0.90，并把 MRR@3 / nDCG@3 做到 0.67 / 0.73；它保留 TF-IDF 相关性信号，便于实现确定性的拒答阈值。CrossEncoder 将未四舍五入的 MRR@3 从 0.667 提升到 0.738、nDCG@3 从 0.728 提升到 0.769，但 Recall@3 从 0.905 降到 0.857，并带来约 400 ms p50、690 ms p95 的 CPU 延迟。
+
+这些数字的边界同样重要：语料规模只有 15 份文档；CrossEncoder 是相关性模型，不是蕴含校验器；引用 ID 有效不等于答案在语义上必然由引用支持。固定测试集的结果已经在开发过程中被查看，因此这里把它作为可复现回归集，而不包装成未见数据上的泛化证明。完整协议、失败案例和端到端拒答指标见[基准结果](docs/benchmark-results.md)。
+
+## 架构
+
+[打开可交互架构图](docs/architecture/evidence-rag-bench-architecture.html)，查看请求、检索、证据约束与评测路径；其可审查的 [JSON 规范](docs/architecture/evidence-rag-bench.architecture.json) 与 HTML 一同纳入版本控制。
 
 ```text
-Evidence Viewer -> FastAPI -> Grounding Guardrail -> Local Retrieval -> Versioned Corpus
-                                              \-> Evaluation Runner -> Provenance-rich JSON reports
-                                     (optional) \-> local CrossEncoder re-ranker
+中文证据查看器 -> FastAPI -> 证据约束护栏 -> 本地检索 -> 版本化语料库
+                                            \-> 评测运行器 -> 带来源信息的 JSON 报告
+                                   （可选） \-> 本地 CrossEncoder 重排
 ```
 
-## Run locally
+## 本地运行
+
+需要 Python 3.12 与 [uv](https://docs.astral.sh/uv/)：
 
 ```bash
 uv sync --python 3.12
@@ -30,16 +52,18 @@ uv run python -m evidence_rag_bench.evaluation.runner --split dev --k 3 --retrie
 uv run uvicorn evidence_rag_bench.api.app:create_app --factory --port 8000
 ```
 
-Open `http://127.0.0.1:8000/`. The demo provides either evidence-bound citations or an explicit abstention; no API key or GPU is required.
+打开 `http://127.0.0.1:8000/`。当前固定语料为英文，因此演示问题也应使用英文；默认 Hybrid 路径不需要 API key 或 GPU。
 
-To reproduce the optional semantic re-ranking experiment, install its extra and select the retriever explicitly:
+复现可选的语义重排实验：
 
 ```bash
 uv sync --extra semantic --python 3.12
 uv run --extra semantic python -m evidence_rag_bench.evaluation.runner --split test --retriever semantic-rerank --k 3 --manifest open_source_manifest.jsonl --cases open_source_test.jsonl
 ```
 
-## API example
+## API 示例
+
+保留英文问题是有意为之：固定语料和词法基线均面向英文。
 
 ```bash
 curl -X POST http://127.0.0.1:8000/v1/ask \
@@ -47,17 +71,18 @@ curl -X POST http://127.0.0.1:8000/v1/ask \
   -d "{\"question\": \"How can FAISS implement cosine similarity?\", \"top_k\": 3}"
 ```
 
-Responses expose the decision (`answer` or `abstain`), a deterministic answer string, confidence, and chunk-level citations. Citation IDs in an `answer` response always refer to the returned evidence; an abstention never invents a citation.
+响应字段与协议值保持稳定：`status` 为 `answer` 或 `abstain`，并包含 `answer`、`reason`、`citations`、`evidence`、`latency_ms`、`trace_id` 与 `mode`。`answer` 响应中的 citation ID 必须引用返回的 evidence；`abstain` 不会编造引用。
 
-## What is evaluated
+## 评测边界与已知限制
 
-Versioned JSONL development and held-out test cases measure Recall@k, MRR@k and nDCG@k over gold evidence IDs. The loader rejects duplicate case IDs, duplicate normalized questions, cross-split question reuse, and labels that conflict with answerability; this makes the development/test boundary executable rather than a convention. Generated reports record corpus-manifest hash, Git revision, time and configuration under ignored `artifacts/reports/`.
+版本化 JSONL 用例按标准证据 ID 计算 Recall@k、MRR@k 与 nDCG@k。加载器拒绝重复案例 ID、重复规范化问题、跨数据集复用问题，以及与可回答性冲突的标签。拒答阈值只由开发集选择，测试集不会参与阈值校准。
 
-The default demo uses fifteen hash-locked, license-attributed open-source technical documents (FAISS, scikit-learn, and LangChain) and a 25-case held-out retrieval split. The local retrievers trade off coverage and ranking quality; see [benchmark results](docs/benchmark-results.md) for the protocol, exact results, failures, and reproduction commands. This is a compact benchmark, not a general performance claim.
+需要明确披露的是：项目早期曾查看测试集结果来比较检索器，测试集也随语料扩展从 8 条增加到 25 条；当前演示默认值参考过这些结果，所以它已经不是严格意义上的盲测集。本仓库将当前版本定位为可复现的回归快照。自 v0.1 起，新的模型和参数先在开发集确定；若测试集扩容，则提升 protocol version 并保留旧快照。新的泛化结论需要另建从未查看且封存的测试集。这个限制也记录在[决策日志](docs/decision-log.md)中。
 
-See the [design](docs/superpowers/specs/2026-09-01-evidence-rag-bench-design.md), [implementation plan](docs/superpowers/plans/2026-09-01-evidence-rag-bench-mvp.md), [data attribution](docs/data-attribution.md), [benchmark results](docs/benchmark-results.md), [optional semantic re-ranking protocol](docs/semantic-reranking.md), [decision log](docs/decision-log.md), and [manual evaluation rubric](docs/evaluation-rubric.md).
+运行生成的报告写入忽略追踪的 `artifacts/reports/`，保留 `corpus_manifest_sha256`、`git_revision`、`created_at`、retriever 配置、metrics 与逐案例 trace，便于复查而不会把临时结果误当成源码。
 
-## License
+进一步阅读：[数据归属](docs/data-attribution.md)、[基准结果](docs/benchmark-results.md)、[可选语义重排协议](docs/semantic-reranking.md)、[决策日志](docs/decision-log.md)、[人工评测量表](docs/evaluation-rubric.md)。
 
-The project code is released under the [MIT License](LICENSE). Corpus documents
-retain their upstream licenses; see [data attribution](docs/data-attribution.md).
+## 许可证（License）
+
+项目代码采用 [MIT License](LICENSE)。语料文档继续适用各自上游许可证，详见[数据归属](docs/data-attribution.md)。

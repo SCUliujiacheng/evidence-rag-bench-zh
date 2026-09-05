@@ -245,7 +245,8 @@ def run_grounded_split(
     """Run end-to-end answer/abstain evaluation and persist a JSON report."""
 
     settings = get_settings(project_root)
-    records = load_manifest(settings.corpus_dir / manifest_filename)
+    manifest_path = settings.corpus_dir / manifest_filename
+    records = load_manifest(manifest_path)
     validate_manifest(records, settings.project_root)
     chunks = [
         chunk for record in records for chunk in chunk_document(record, settings.project_root)
@@ -278,10 +279,14 @@ def run_grounded_split(
         top_k=top_k,
         threshold=effective_threshold,
         metadata={
+            "corpus_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+            "git_revision": git_revision(settings.project_root),
+            "created_at": datetime.now(UTC).isoformat(),
             "split": split,
             "retriever": retriever_name,
             "manifest_filename": manifest_filename,
             "case_filename": cases_path.name,
+            "top_k": str(top_k),
             "abstention_threshold": str(effective_threshold),
             "threshold_source": calibration_path.name
             if calibration_path
@@ -307,7 +312,7 @@ def run_grounded_split(
 def main() -> None:
     """Run a named benchmark split from the command line."""
 
-    parser = argparse.ArgumentParser(description="Run an Evidence RAG retrieval benchmark.")
+    parser = argparse.ArgumentParser(description="运行 Evidence RAG 检索基准。")
     parser.add_argument("--split", choices=("dev", "test"), required=True)
     parser.add_argument("--k", type=int, default=3)
     parser.add_argument(
@@ -319,12 +324,12 @@ def main() -> None:
     parser.add_argument("--cases")
     parser.add_argument(
         "--calibration-cases",
-        help="development JSONL used to choose the grounded abstention threshold",
+        help="用于选择证据化拒答阈值的开发集 JSONL",
     )
     parser.add_argument(
         "--threshold",
         type=float,
-        help="explicit grounded abstention threshold; overrides calibration",
+        help="显式指定证据化拒答阈值；优先于校准结果",
     )
     parser.add_argument("--mode", choices=("retrieval", "grounded"), default="retrieval")
     arguments = parser.parse_args()

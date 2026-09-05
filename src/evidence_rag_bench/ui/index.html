@@ -1,23 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Evidence RAG Bench</title>
+    <title>Evidence RAG Bench｜证据检索评测台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <main>
-      <p class="eyebrow">REPRODUCIBLE RAG BENCHMARK</p>
+      <p class="eyebrow">可复现 RAG 基准</p>
       <h1>Evidence RAG Bench</h1>
-      <p class="lede">Ask a question against the fixed corpus. Every answer must show its evidence or abstain.</p>
-      <form id="ask-form">
-        <label for="question">Question</label>
+      <p class="lede">向固定语料库提问。每个回答都必须展示证据，否则系统会明确拒答。</p>
+      <p>当前固定语料为英文，请使用英文问题进行检索。</p>
+      <form id="ask-form" aria-label="证据检索">
+        <label for="question">英文问题</label>
         <textarea id="question" required maxlength="1000" placeholder="How does lexical retrieval work?"></textarea>
-        <button type="submit">Retrieve evidence</button>
+        <button type="submit">检索证据</button>
       </form>
-      <section id="result" aria-live="polite" hidden>
+      <section id="result" aria-label="检索结果" aria-live="polite" hidden>
         <p id="status" class="status"></p>
         <p id="answer"></p>
         <p id="reason"></p>

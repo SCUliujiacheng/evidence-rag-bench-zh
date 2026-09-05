@@ -5,6 +5,30 @@ from fastapi.testclient import TestClient
 from evidence_rag_bench.api.app import create_app
 
 
+def test_homepage_is_chinese_and_explains_the_english_corpus() -> None:
+    project_root = Path(__file__).parents[2]
+
+    response = TestClient(create_app(project_root)).get("/")
+
+    assert response.status_code == 200
+    assert '<html lang="zh-CN">' in response.text
+    assert "可复现 RAG 基准" in response.text
+    assert "当前固定语料为英文" in response.text
+    assert "检索证据" in response.text
+    assert "How does lexical retrieval work?" in response.text
+
+
+def test_openapi_operation_summaries_are_chinese() -> None:
+    project_root = Path(__file__).parents[2]
+
+    schema = TestClient(create_app(project_root)).get("/openapi.json").json()
+
+    assert schema["paths"]["/health"]["get"]["summary"] == "检查服务状态"
+    assert schema["paths"]["/v1/ask"]["post"]["summary"] == "检索并生成证据化回答"
+    assert schema["paths"]["/v1/evaluations/run"]["post"]["summary"] == "运行检索评测"
+    assert schema["paths"]["/v1/evaluations/{report_id}"]["get"]["summary"] == "获取评测报告"
+
+
 def test_health_reports_ready_client() -> None:
     project_root = Path(__file__).parents[2]
 
@@ -71,3 +95,12 @@ def test_demo_serves_a_vector_favicon() -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("image/svg+xml")
+
+
+def test_demo_styles_allow_long_evidence_to_wrap_on_mobile() -> None:
+    project_root = Path(__file__).parents[2]
+    response = TestClient(create_app(project_root)).get("/styles.css")
+
+    assert response.status_code == 200
+    assert "min-width: 0" in response.text
+    assert "overflow-wrap: anywhere" in response.text

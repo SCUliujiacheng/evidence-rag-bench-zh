@@ -1,13 +1,13 @@
-:root { font-family: Inter, system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+:root { font-family: Inter, "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; color: #172033; background: #f4f7fb; }
 body { margin: 0; }
-main { max-width: 760px; margin: 0 auto; padding: 4rem 1.25rem; }
+main { max-width: 760px; min-width: 0; margin: 0 auto; padding: 4rem 1.25rem; }
 .eyebrow { color: #2d5bd1; font-size: .78rem; font-weight: 700; letter-spacing: .1em; }
 h1 { font-size: clamp(2.2rem, 8vw, 4.5rem); margin: .2rem 0; }
 .lede { color: #536174; font-size: 1.1rem; }
-form, #result { margin-top: 2rem; padding: 1.25rem; background: white; border: 1px solid #dce3ee; border-radius: .75rem; }
+form, #result { min-width: 0; margin-top: 2rem; padding: 1.25rem; background: white; border: 1px solid #dce3ee; border-radius: .75rem; }
 label, textarea { display: block; width: 100%; box-sizing: border-box; }
 textarea { min-height: 6rem; margin: .5rem 0 1rem; padding: .75rem; font: inherit; }
 button { background: #1e4ec2; border: 0; border-radius: .4rem; color: white; cursor: pointer; font: inherit; padding: .7rem 1rem; }
 .status { color: #1e4ec2; font-weight: 800; letter-spacing: .06em; }
-.evidence-card { border-left: 3px solid #68a375; margin-top: 1rem; padding: .75rem 1rem; background: #f4faf5; }
+.evidence-card { min-width: 0; border-left: 3px solid #68a375; margin-top: 1rem; padding: .75rem 1rem; background: #f4faf5; overflow-wrap: anywhere; }
 .evidence-card p { line-height: 1.5; }

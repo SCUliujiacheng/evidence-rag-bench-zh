@@ -1,5 +1,6 @@
 import hashlib
 import json
+from datetime import datetime
 from pathlib import Path
 
 from evidence_rag_bench.evaluation.cases import EvaluationCase
@@ -182,6 +183,17 @@ def test_run_grounded_split_writes_an_end_to_end_report() -> None:
 
     assert report_path.is_file()
     assert "citation_valid_rate" in report.metrics
+    manifest_path = project_root / "data" / "corpus" / "open_source_manifest.jsonl"
+    assert (
+        report.metadata["corpus_manifest_sha256"]
+        == hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    )
+    assert report.metadata["git_revision"]
+    created_at = datetime.fromisoformat(report.metadata["created_at"])
+    assert created_at.utcoffset() is not None
+    assert report.metadata["top_k"] == "3"
+    persisted = json.loads(report_path.read_text(encoding="utf-8"))
+    assert persisted["metadata"] == report.metadata
 
 
 def test_run_grounded_split_records_threshold_calibrated_from_development_cases(

@@ -1,12 +1,8 @@
-# Open-source corpus attribution
+# 开源语料归属
 
-The files in `data/corpus/open_source/` are exact, hash-locked upstream README
-documents. They are downloaded only through `evidence_rag_bench.corpus.fetch`
-and validated against `data/corpus/open_source_manifest.jsonl` before indexing.
-They are included to make the benchmark reproducible, not to imply endorsement
-by their authors.
+`data/corpus/open_source/` 中的文件是上游 README 文档的精确、哈希锁定副本。它们只通过 `evidence_rag_bench.corpus.fetch` 下载，并在建立索引前依据 `data/corpus/open_source_manifest.jsonl` 校验。纳入这些文件是为了让基准可复现，并不代表原作者对本项目背书。
 
-| Document | Upstream repository | License | Source |
+| 文档 | 上游仓库 | 许可证 | 来源 |
 | --- | --- | --- | --- |
 | FAISS README | Meta FAISS | MIT | https://github.com/facebookresearch/faiss |
 | FAISS Benchmarks README | Meta FAISS | MIT | https://github.com/facebookresearch/faiss |
@@ -24,8 +20,4 @@ by their authors.
 | LangChain Standard Tests README | LangChain | MIT | https://github.com/langchain-ai/langchain |
 | LangChain OpenAI Integration README | LangChain | MIT | https://github.com/langchain-ai/langchain |
 
-Each source's original license remains applicable. The corpus manifest records
-the direct raw source URL, date, local path, SHA-256 checksum, and intended
-benchmark scope. To refresh a source, first update its manifest hash and
-attribution after reviewing upstream license changes; do not overwrite a locked
-file in place.
+每个来源继续适用其原许可证。语料 manifest 记录直接 raw source URL、date、local path、SHA-256 checksum 与预期 benchmark scope。刷新来源前，应先审查上游许可证变化，再更新 manifest hash 与 attribution；不要直接覆盖已锁定的文件。

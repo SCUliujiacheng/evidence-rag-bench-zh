@@ -1,7 +1,7 @@
 [project]
 name = "evidence-rag-bench"
 version = "0.1.0"
-description = "A reproducible benchmark for evidence-grounded retrieval-augmented generation."
+description = "可复现的证据约束 Retrieval-Augmented Generation（RAG）评测基准。"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

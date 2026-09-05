@@ -1,33 +1,19 @@
-# Decision log
+# 决策日志
 
-## Use a fixed, license-attributed corpus
+## 使用固定且注明许可证的语料
 
-The benchmark keeps source URLs, license labels, retrieval date, local paths,
-and SHA-256 checksums in a versioned JSONL manifest. This makes an experiment
-reviewable and prevents a quietly changed web page from changing a result.
+基准在版本化 JSONL manifest 中保存 source URL、license label、retrieval date、local path 与 SHA-256 checksum。这样既能复查实验，也能防止网页悄然变化后影响结果。
 
-## Compare three local retrievers before adding providers
+## 引入外部 provider 前先比较三种本地检索器
 
-BM25, word/bigram TF-IDF, and reciprocal-rank fusion run offline and on the
-same chunks. The first held-out run selected RRF Hybrid because it improved
-MRR@3 and nDCG@3, not because it was assumed to be better.
+BM25、词级/双词组 TF-IDF 与 reciprocal-rank fusion 在离线环境中对相同分块运行。项目早期确实查看了测试集结果，并据此选择 RRF Hybrid；这意味着该测试集此后只能作为固定回归集，不能再被描述为证明泛化能力的盲测集。
 
-After the corpus grew, BM25 led the development split on retrieval coverage,
-while Hybrid retained a positive TF-IDF relevance signal that lets the API
-abstain on an unseen query. The API therefore defaults to Hybrid for safe
-delivery; benchmark tables continue to show every retriever rather than
-claiming one universal winner.
+语料扩充后，BM25 在开发集检索覆盖率上领先，而 Hybrid 仍保留一个正的 TF-IDF 相关性信号，使 API 能够对未见问题拒答。因此 API 默认使用 Hybrid 以实现更安全的演示；基准表继续展示每种检索器，不宣称存在普适赢家。未来如需提出新的模型选择或泛化结论，必须使用从未查看且封存的新测试集。
 
-## Keep rank score separate from abstention confidence
+## 将 rank score 与 abstention confidence 分开
 
-RRF scores only describe rank position. The system now retains a TF-IDF
-relevance score for abstention and calibrates its threshold from development
-cases only. Held-out results demonstrate that lexical confidence is still an
-insufficient semantic-support signal; see `benchmark-results.md`.
+RRF 分数只描述排序位置。系统保留独立的 TF-IDF 相关性分数用于拒答，并且只从开发集校准阈值。固定测试集结果证明词法置信度仍不足以作为语义支持信号；见 `benchmark-results.md`。
 
-## Do not present citation validity as factuality
+## 不把 citation validity 表述为 factuality
 
-The deterministic formatter guarantees that cited IDs belong to returned
-evidence. This is a provenance property, not proof that a natural-language
-claim is entailed by a passage. A future semantic verifier must be measured
-separately on a held-out support annotation set.
+确定性 formatter 只保证 cited ID 属于返回的 evidence。这是一项来源可追踪属性，并不能证明自然语言 claim 由 passage 蕴含。未来的 semantic verifier 必须在 held-out support annotation set 上独立评测。

@@ -19,14 +19,14 @@ from evidence_rag_bench.retrieval.hybrid import HybridRetriever
 
 
 class AskRequest(BaseModel):
-    """Validated browser or API question payload."""
+    """经过校验的浏览器或 API 问题载荷。"""
 
     question: str = Field(min_length=1, max_length=1000)
     top_k: int = Field(default=3, ge=1, le=10)
 
 
 class EvaluationRequest(BaseModel):
-    """Validated benchmark execution request."""
+    """经过校验的基准运行请求。"""
 
     split: Literal["dev", "test"]
     k: int = Field(default=3, ge=1, le=10)
@@ -72,10 +72,14 @@ def create_app(project_root: Path | None = None) -> FastAPI:
     """Create a local API and static evidence viewer."""
 
     services = build_services(project_root)
-    app = FastAPI(title="Evidence RAG Bench", version="0.1.0")
+    app = FastAPI(
+        title="Evidence RAG Bench｜证据检索评测台",
+        description="可复现的本地 RAG 检索、证据约束与评测 API。",
+        version="0.1.0",
+    )
     ui_dir = Path(__file__).parents[1] / "ui"
 
-    @app.get("/health")
+    @app.get("/health", summary="检查服务状态")
     def health() -> dict[str, str | int | float]:
         return {
             "status": "ok",
@@ -85,13 +89,11 @@ def create_app(project_root: Path | None = None) -> FastAPI:
             "abstention_threshold": services.abstention_threshold,
         }
 
-    @app.post("/v1/ask")
+    @app.post("/v1/ask", summary="检索并生成证据化回答")
     def ask(request: AskRequest):
         question = request.question.strip()
         if not question:
-            raise HTTPException(
-                status_code=422, detail="question must contain non-whitespace characters"
-            )
+            raise HTTPException(status_code=422, detail="问题不能只包含空白字符")
         return answer_question(
             question,
             services.retriever,
@@ -99,7 +101,7 @@ def create_app(project_root: Path | None = None) -> FastAPI:
             top_k=request.top_k,
         )
 
-    @app.post("/v1/evaluations/run")
+    @app.post("/v1/evaluations/run", summary="运行检索评测")
     def run_evaluation(request: EvaluationRequest) -> dict[str, object]:
         report, report_path = run_split(
             services.settings.project_root,
@@ -111,28 +113,28 @@ def create_app(project_root: Path | None = None) -> FastAPI:
         )
         return {"report_id": request.split, "report_path": str(report_path), "report": report}
 
-    @app.get("/v1/evaluations/{report_id}")
+    @app.get("/v1/evaluations/{report_id}", summary="获取评测报告")
     def get_evaluation(report_id: Literal["dev", "test"]):
         report_path = (
             services.settings.artifacts_dir / "reports" / f"open_source-hybrid-{report_id}.json"
         )
         if not report_path.is_file():
-            raise HTTPException(status_code=404, detail="report has not been generated")
+            raise HTTPException(status_code=404, detail="报告尚未生成")
         return FileResponse(report_path, media_type="application/json")
 
-    @app.get("/")
+    @app.get("/", summary="打开中文演示界面", include_in_schema=False)
     def index() -> FileResponse:
         return FileResponse(ui_dir / "index.html")
 
-    @app.get("/app.js")
+    @app.get("/app.js", summary="加载演示脚本", include_in_schema=False)
     def javascript() -> FileResponse:
         return FileResponse(ui_dir / "app.js", media_type="application/javascript")
 
-    @app.get("/styles.css")
+    @app.get("/styles.css", summary="加载演示样式", include_in_schema=False)
     def stylesheet() -> FileResponse:
         return FileResponse(ui_dir / "styles.css", media_type="text/css")
 
-    @app.get("/favicon.svg")
+    @app.get("/favicon.svg", summary="加载站点图标", include_in_schema=False)
     def favicon() -> FileResponse:
         return FileResponse(ui_dir / "favicon.svg", media_type="image/svg+xml")
 

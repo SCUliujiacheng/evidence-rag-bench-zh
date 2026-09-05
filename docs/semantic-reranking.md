@@ -1,39 +1,21 @@
-# Optional local semantic re-ranking
+# 可选的本地语义重排
 
-The default benchmark remains deterministic and dependency-light. This optional
-stage re-ranks a fixed lexical candidate set with a local CrossEncoder; it does
-not invent an answer, alter corpus content, or relax citation validation.
+默认基准保持确定性与轻量依赖。这个可选阶段使用本地 CrossEncoder 对固定的词法候选集重排；它不会生成答案、修改语料内容，也不会放宽引用校验。
 
-## Model choice
+## 模型选择
 
-The initial experiment target is
-[`cross-encoder/ms-marco-MiniLM-L6-v2`](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2): a 22.7M-parameter,
-Apache-2.0 licensed passage-ranking CrossEncoder. The model card documents its
-MS MARCO training data and `CrossEncoder` inference interface. It is a
-semantic relevance re-ranker, **not** a factual-entailment verifier; the
-project must not claim that it proves an answer is supported.
+初始实验选用 [`cross-encoder/ms-marco-MiniLM-L6-v2`](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2)：一个拥有 22.7M 参数、采用 Apache-2.0 许可证的 passage-ranking CrossEncoder。model card 记录了它的 MS MARCO 训练数据与 `CrossEncoder` 推理接口。它是 semantic relevance re-ranker，**不是** factual-entailment verifier；本项目不会声称它能够证明答案得到证据支持。
 
-## Run locally
+## 本地运行
 
 ```bash
 uv sync --extra semantic
 ```
 
-`SentenceTransformersCrossEncoder` loads the named model lazily, so CI and the
-baseline demo do not download model weights. Reports record model identity and
-candidate depth alongside the existing lexical configuration. A run may use
-development cases to choose a threshold, but it must not change the frozen
-held-out labels or tune on them.
+`SentenceTransformersCrossEncoder` 会延迟加载指定模型，因此 CI 与默认演示不会下载模型权重。报告在现有词法配置之外记录模型标识与候选深度。运行只使用开发集选择阈值；当前 test 快照只用于回归报告，不在其上重新调参。
 
-## Acceptance gate
+## 验收门槛
 
-The initial CPU experiment (15-document corpus, 25 frozen held-out cases,
-candidate depth 10) improved Hybrid MRR@3 from 0.667 to 0.738 and nDCG@3 from
-0.728 to 0.769, while Recall@3 fell from 0.905 to 0.857. With a
-development-selected threshold, false-answer rate fell from 0.75 to 0.00 and
-abstention recall rose from 0.25 to 1.00; p50 latency rose to about 400ms. Full
-measurements and caveats are in [benchmark results](benchmark-results.md).
+初始 CPU 实验使用 15 份文档、当前版本化的 25 条 test 案例以及 10 个候选，将 Hybrid MRR@3 从 0.667 提升到 0.738，nDCG@3 从 0.728 提升到 0.769，而 Recall@3 从 0.905 降到 0.857。使用开发集选择阈值后，错误回答率从 0.75 降到 0.00，拒答召回率从 0.25 提升到 1.00；p50 延迟上升到约 400 ms。完整数据与限制见[基准结果](benchmark-results.md)。
 
-Hybrid remains the default deterministic retriever because BM25 still wins
-retrieval coverage, the CrossEncoder adds CPU latency, and a relevance model is
-not yet an explicit answer-entailment verifier.
+Hybrid 仍是默认的确定性检索器：BM25 在检索覆盖率上仍然领先，CrossEncoder 增加 CPU 延迟，而且相关性模型尚不能充当显式的答案蕴含校验器。

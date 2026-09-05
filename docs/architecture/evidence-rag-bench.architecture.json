@@ -2,41 +2,42 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Evidence RAG Bench Architecture",
+    "title": "Evidence RAG Bench 架构",
+    "locale": "zh-CN",
     "output": "evidence-rag-bench-architecture.html",
     "quality_profile": "showcase",
     "repository": {
-      "url": "https://github.com/SCUliujiacheng/evidence-rag-bench",
+      "url": "https://github.com/SCUliujiacheng/evidence-rag-bench-zh",
       "revision": "7affaceaec01ef79643b747feb7544387a3c5146"
     },
     "views": [
-      { "id": "request", "label": "Evidence-bound answer path", "focus": ["browser", "api", "retriever", "grounding"], "note": "A question receives evidence or an explicit abstention." },
-      { "id": "evaluation", "label": "Reproducible evaluation", "focus": ["corpus", "retriever", "benchmark", "reports"], "note": "Hash-locked inputs produce reportable benchmark artifacts." },
-      { "id": "semantic", "label": "Optional semantic stage", "focus": ["retriever", "reranker", "benchmark"], "note": "The CrossEncoder re-ranks fixed candidates but remains opt-in." }
+      { "id": "request", "label": "证据约束回答路径", "focus": ["browser", "api", "retriever", "grounding"], "note": "问题要么获得证据，要么得到明确拒答。" },
+      { "id": "evaluation", "label": "可复现评测", "focus": ["corpus", "retriever", "benchmark", "reports"], "note": "哈希锁定的输入生成可报告的基准产物。" },
+      { "id": "semantic", "label": "可选语义阶段", "focus": ["retriever", "reranker", "benchmark"], "note": "CrossEncoder 重排固定候选，但保持为 opt-in。" }
     ]
   },
   "components": [
-    { "id": "browser", "type": "frontend", "label": "Evidence Viewer", "sublabel": "Static browser UI", "pos": [40, 285], "size": [145, 64], "sources": [{ "path": "src/evidence_rag_bench/ui/index.html" }] },
-    { "id": "api", "type": "backend", "label": "FastAPI Service", "sublabel": "/v1/ask + evaluation API", "pos": [265, 285], "size": [165, 64], "sources": [{ "path": "src/evidence_rag_bench/api/app.py" }] },
-    { "id": "grounding", "type": "security", "label": "Grounding Guardrail", "sublabel": "Citation validation + abstention", "pos": [515, 285], "size": [175, 64], "sources": [{ "path": "src/evidence_rag_bench/grounding/service.py" }] },
-    { "id": "retriever", "type": "backend", "label": "Local Retrieval", "sublabel": "BM25 / TF-IDF / RRF Hybrid", "pos": [515, 120], "size": [175, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/hybrid.py" }] },
-    { "id": "reranker", "type": "cloud", "label": "Optional CrossEncoder", "sublabel": "Local MiniLM semantic re-rank", "pos": [755, 120], "size": [185, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/rerank.py" }] },
-    { "id": "corpus", "type": "database", "label": "Versioned Corpus", "sublabel": "15 licensed, hash-locked sources", "pos": [265, 120], "size": [175, 64], "sources": [{ "path": "data/corpus/open_source_manifest.jsonl" }] },
-    { "id": "benchmark", "type": "backend", "label": "Evaluation Runner", "sublabel": "Dev-only calibration + held-out test", "pos": [755, 285], "size": [185, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] },
-    { "id": "reports", "type": "database", "label": "JSON Reports", "sublabel": "Metrics, traces, provenance", "pos": [1010, 285], "size": [160, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] }
+    { "id": "browser", "type": "frontend", "label": "证据查看器", "sublabel": "静态浏览器 UI", "pos": [40, 285], "size": [145, 64], "sources": [{ "path": "src/evidence_rag_bench/ui/index.html" }] },
+    { "id": "api", "type": "backend", "label": "FastAPI 服务", "sublabel": "/v1/ask + 评测 API", "pos": [265, 285], "size": [165, 64], "sources": [{ "path": "src/evidence_rag_bench/api/app.py" }] },
+    { "id": "grounding", "type": "security", "label": "证据约束护栏", "sublabel": "引用校验 + 拒答", "pos": [515, 285], "size": [175, 64], "sources": [{ "path": "src/evidence_rag_bench/grounding/service.py" }] },
+    { "id": "retriever", "type": "backend", "label": "本地检索", "sublabel": "BM25 / TF-IDF / RRF Hybrid", "pos": [515, 120], "size": [175, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/hybrid.py" }] },
+    { "id": "reranker", "type": "cloud", "label": "可选 CrossEncoder", "sublabel": "本地 MiniLM 语义重排", "pos": [755, 120], "size": [185, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/rerank.py" }] },
+    { "id": "corpus", "type": "database", "label": "版本化语料库", "sublabel": "15 份含许可证、哈希锁定的来源", "pos": [265, 120], "size": [175, 64], "sources": [{ "path": "data/corpus/open_source_manifest.jsonl" }] },
+    { "id": "benchmark", "type": "backend", "label": "评测运行器", "sublabel": "dev 校准 + 固定 test 回归", "pos": [755, 285], "size": [185, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] },
+    { "id": "reports", "type": "database", "label": "JSON 报告", "sublabel": "指标、轨迹、来源信息", "pos": [1010, 285], "size": [160, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] }
   ],
   "connections": [
     { "id": "ask", "from": "browser", "to": "api", "label": "POST /v1/ask", "variant": "emphasis" },
-    { "id": "answer", "from": "api", "to": "grounding", "label": "answer or abstain", "variant": "security", "labelDy": 56 },
-    { "id": "retrieve", "from": "grounding", "to": "retriever", "label": "top-k evidence", "fromSide": "top", "toSide": "bottom" },
-    { "id": "index", "from": "corpus", "to": "retriever", "label": "deterministic chunks", "labelDy": 56 },
-    { "id": "rerank", "from": "retriever", "to": "reranker", "label": "optional candidates", "variant": "dashed", "labelDy": -52 },
-    { "id": "evaluate", "from": "retriever", "to": "benchmark", "label": "retrieval traces", "fromSide": "right", "toSide": "top" },
-    { "id": "write", "from": "benchmark", "to": "reports", "label": "provenance-rich JSON", "labelDy": 56 }
+    { "id": "answer", "from": "api", "to": "grounding", "label": "answer 或 abstain", "variant": "security", "labelDy": 56 },
+    { "id": "retrieve", "from": "grounding", "to": "retriever", "label": "top-k 证据", "fromSide": "top", "toSide": "bottom" },
+    { "id": "index", "from": "corpus", "to": "retriever", "label": "确定性分块", "labelDy": 56 },
+    { "id": "rerank", "from": "retriever", "to": "reranker", "label": "可选候选", "variant": "dashed", "labelDy": -52 },
+    { "id": "evaluate", "from": "retriever", "to": "benchmark", "label": "检索轨迹", "fromSide": "right", "toSide": "top" },
+    { "id": "write", "from": "benchmark", "to": "reports", "label": "含来源信息的 JSON", "labelDy": 56 }
   ],
   "cards": [
-    { "dot": "emerald", "title": "Trust boundary", "items": ["Every returned citation must belong to returned evidence", "Low confidence returns an explicit abstention"] },
-    { "dot": "cyan", "title": "Reproducibility", "items": ["Manifest hashes and stable chunk IDs", "Development-only threshold selection"] },
-    { "dot": "violet", "title": "Model discipline", "items": ["Lexical default runs without a key or GPU", "CrossEncoder is measured, optional, and not called an entailment verifier"] }
+    { "dot": "emerald", "title": "信任边界", "items": ["每个返回的 citation 必须属于返回的 evidence", "低置信度时明确返回 abstention"] },
+    { "dot": "cyan", "title": "可复现性", "items": ["Manifest 哈希与稳定的 chunk ID", "阈值只使用开发集选择"] },
+    { "dot": "violet", "title": "模型边界", "items": ["默认词法路径无需 API key 或 GPU", "CrossEncoder 有实测结果且保持可选，不将其称为 entailment verifier"] }
   ]
 }
