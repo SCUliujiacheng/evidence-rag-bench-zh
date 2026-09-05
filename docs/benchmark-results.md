@@ -26,9 +26,9 @@ BM25 与 Hybrid 在测试集 Recall@3 上持平；Hybrid 在首位排序和分�
 
 端到端运行器只从指定的开发集 JSONL 选择相关性阈值，并把阈值及其来源写入报告。Hybrid 的固定开发集阈值为 `0.146054`；在测试集上得到：引用有效率 1.00、相对标准证据的引用精确率/召回率 0.41/0.43、拒答精确率 0.33、拒答召回率 0.25、错误回答率 0.75、错误拒答率 0.10。
 
-这些数字不会被包装成成功：`os-test-007` 含有看似合理的 LangChain 词汇，却要求一个语料并不支持的推荐，因此词法相关性仍会放行错误答案。这正是项目记录的下一个问题——citation ID 有效并不等于语义支持。任何 semantic verifier 都必须只用开发集标签校准，并在 held-out split 上报告结果，不得重新调参。
+这些数字不会被包装成成功：`os-test-007` 含有看似合理的 LangChain 词汇，却要求一个语料并不支持的推荐，因此词法相关性仍会放行错误答案。这正是项目记录的下一个问题——citation ID 有效并不等于语义支持。任何 semantic verifier 都必须只用开发集标签校准，并在固定 test 回归集上报告结果，不得重新调参；只有未来封存且从未查看的新数据才称为 held-out。
 
-可选 CrossEncoder 运行只使用开发集 JSONL，选择的阈值为 `2.463407`。它在 held-out 集上得到：相对 gold 的 citation precision/recall 0.68/0.62、abstention precision 0.67、abstention recall 1.00、false-answer rate 0.00、false-abstain rate 0.10、citation-valid rate 1.00、p50 latency 约 400 ms、p95 latency 约 690 ms。这里的 `false-answer rate` 指系统是否对 non-answerable case 返回了答案；它**不能**证明 answerable case 的每个答案都由引用蕴含。后者仍是明确待做的 semantic-support evaluation。
+可选 CrossEncoder 运行只使用开发集 JSONL，选择的阈值为 `2.463407`。它在固定 test 回归集上得到：相对 gold 的 citation precision/recall 0.68/0.62、abstention precision 0.67、abstention recall 1.00、false-answer rate 0.00、false-abstain rate 0.10、citation-valid rate 1.00、p50 latency 约 400 ms、p95 latency 约 690 ms。这里的 `false-answer rate` 指系统是否对 non-answerable case 返回了答案；它**不能**证明 answerable case 的每个答案都由引用蕴含。后者仍是明确待做的 semantic-support evaluation。
 
 ## 复现
 
