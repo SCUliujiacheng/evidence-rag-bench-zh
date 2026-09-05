@@ -104,3 +104,14 @@ def test_demo_styles_allow_long_evidence_to_wrap_on_mobile() -> None:
     assert response.status_code == 200
     assert "min-width: 0" in response.text
     assert "overflow-wrap: anywhere" in response.text
+
+
+def test_demo_handles_blank_and_structured_api_errors_in_chinese() -> None:
+    project_root = Path(__file__).parents[2]
+    response = TestClient(create_app(project_root)).get("/app.js")
+
+    assert response.status_code == 200
+    assert "if (!question)" in response.text
+    assert "问题不能只包含空白字符" in response.text
+    assert 'typeof body.detail === "string"' in response.text
+    assert "请求参数不符合要求，请检查后重试" in response.text

@@ -16,9 +16,28 @@ function element(tag, text) {
   return node;
 }
 
+function showError(message) {
+  result.hidden = false;
+  evidence.replaceChildren();
+  status.textContent = "请求失败";
+  answer.textContent = message;
+  reason.textContent = "";
+  latency.textContent = "";
+}
+
+function apiErrorMessage(body) {
+  return typeof body.detail === "string"
+    ? body.detail
+    : "请求参数不符合要求，请检查后重试。";
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const question = document.querySelector("#question").value.trim();
+  if (!question) {
+    showError("问题不能只包含空白字符。");
+    return;
+  }
   const response = await fetch("/v1/ask", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -28,10 +47,7 @@ form.addEventListener("submit", async (event) => {
   result.hidden = false;
   evidence.replaceChildren();
   if (!response.ok) {
-    status.textContent = "请求失败";
-    answer.textContent = body.detail || "服务暂时无法处理这个问题。";
-    reason.textContent = "";
-    latency.textContent = "";
+    showError(apiErrorMessage(body));
     return;
   }
   status.textContent = body.status === "answer" ? "已基于证据回答" : "已拒答";
