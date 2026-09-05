@@ -12,9 +12,9 @@ def test_homepage_is_chinese_and_explains_the_english_corpus() -> None:
 
     assert response.status_code == 200
     assert '<html lang="zh-CN">' in response.text
-    assert "可复现 RAG 基准" in response.text
-    assert "当前固定语料为英文" in response.text
-    assert "检索证据" in response.text
+    assert "固定语料 · 本地检索" in response.text
+    assert "语料是英文技术文档" in response.text
+    assert "查看相关段落" in response.text
     assert "How does lexical retrieval work?" in response.text
 
 
@@ -97,6 +97,16 @@ def test_demo_serves_a_vector_favicon() -> None:
     assert response.headers["content-type"].startswith("image/svg+xml")
 
 
+def test_homepage_uses_a_plain_explanation_of_the_evidence_boundary() -> None:
+    project_root = Path(__file__).parents[2]
+
+    response = TestClient(create_app(project_root)).get("/")
+
+    assert response.status_code == 200
+    assert "在固定语料里找答案；证据不够时，系统会直接说明。" in response.text
+    assert "查看相关段落" in response.text
+
+
 def test_demo_styles_allow_long_evidence_to_wrap_on_mobile() -> None:
     project_root = Path(__file__).parents[2]
     response = TestClient(create_app(project_root)).get("/styles.css")
@@ -114,4 +124,4 @@ def test_demo_handles_blank_and_structured_api_errors_in_chinese() -> None:
     assert "if (!question)" in response.text
     assert "问题不能只包含空白字符" in response.text
     assert 'typeof body.detail === "string"' in response.text
-    assert "请求参数不符合要求，请检查后重试" in response.text
+    assert "问题格式不对，检查一下再试" in response.text

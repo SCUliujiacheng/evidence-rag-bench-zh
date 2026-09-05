@@ -13,7 +13,7 @@
 | RRF Hybrid | **0.90** | 0.67 | 0.73 |
 | Hybrid + MiniLM CrossEncoder re-rank | 0.86 | **0.74** | **0.77** |
 
-BM25 与 Hybrid 在测试集 Recall@3 上持平；Hybrid 在首位排序和分级排序上略占优势。演示服务保留 Hybrid，是因为它同时暴露正的 TF-IDF 相关性信号，可用于更安全的 `answer` / `abstain` 协议。两个词法基线都会移除常见英文停用词。语料规模较小且测试结果已被查看，因此该表证明的是工程行为，而不是对通用 RAG 优越性的宣称。
+BM25 与 Hybrid 在测试集 Recall@3 上持平；Hybrid 在首位排序和分级排序上略占优势。演示服务用 Hybrid，是因为它保留了正的 TF-IDF 相关性分数，拒答规则可以据此工作。两个词法基线都会移除常见英文停用词。语料很小，测试结果也已被查看；这张表描述的是这套实现，不是通用 RAG 的胜负。
 
 可选语义实验使用 `cross-encoder/ms-marco-MiniLM-L6-v2`（Apache-2.0），在 CPU 上对 Hybrid 的前 10 个候选进行重排。它相对 Hybrid 提升了 MRR 与 nDCG，却没有提升 Recall@3，因此无法找回词法候选集中原本不存在的证据。由于延迟明显更高，它保持为 opt-in 功能。
 
@@ -26,7 +26,7 @@ BM25 与 Hybrid 在测试集 Recall@3 上持平；Hybrid 在首位排序和分�
 
 端到端运行器只从指定的开发集 JSONL 选择相关性阈值，并把阈值及其来源写入报告。Hybrid 的固定开发集阈值为 `0.146054`；在测试集上得到：引用有效率 1.00、相对标准证据的引用精确率/召回率 0.41/0.43、拒答精确率 0.33、拒答召回率 0.25、错误回答率 0.75、错误拒答率 0.10。
 
-这些数字不会被包装成成功：`os-test-007` 含有看似合理的 LangChain 词汇，却要求一个语料并不支持的推荐，因此词法相关性仍会放行错误答案。这正是项目记录的下一个问题——citation ID 有效并不等于语义支持。任何 semantic verifier 都必须只用开发集标签校准，并在固定 test 回归集上报告结果，不得重新调参；只有未来封存且从未查看的新数据才称为 held-out。
+`os-test-007` 让这些数字不能被当作成功：它有看似合理的 LangChain 词汇，却要求语料不支持的推荐，所以词法相关性仍会放行错误答案。下一个问题很直接——citation ID 有效不等于语义支持。任何 semantic verifier 都必须只用开发集标签校准，并在固定 test 回归集上报告结果，不得重新调参；只有未来封存且从未查看的新数据才称为 held-out。
 
 可选 CrossEncoder 运行只使用开发集 JSONL，选择的阈值为 `2.463407`。它在固定 test 回归集上得到：相对 gold 的 citation precision/recall 0.68/0.62、abstention precision 0.67、abstention recall 1.00、false-answer rate 0.00、false-abstain rate 0.10、citation-valid rate 1.00、p50 latency 约 400 ms、p95 latency 约 690 ms。这里的 `false-answer rate` 指系统是否对 non-answerable case 返回了答案；它**不能**证明 answerable case 的每个答案都由引用蕴含。后者仍是明确待做的 semantic-support evaluation。
 

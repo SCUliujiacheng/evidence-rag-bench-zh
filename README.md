@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Evidence RAG Bench｜证据驱动的 RAG 评测基准</h1>
-  <p>让检索结果可复现、引用可校验，并在证据不足时明确拒答。</p>
+  <p>把 RAG 找到的段落和引用摊开来看看。</p>
   <p>
     <a href="https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml"><img src="https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&amp;logoColor=white" alt="Python 3.12">
@@ -8,7 +8,7 @@
   </p>
   <p>
     <a href="#我为什么做这个项目">为什么做</a> ·
-    <a href="#3-分钟设计速览">设计速览</a> ·
+    <a href="#我想检查什么">我想检查什么</a> ·
     <a href="#架构">架构</a> ·
     <a href="#本地运行">本地运行</a> ·
     <a href="#评测边界与已知限制">评测边界</a> ·
@@ -22,19 +22,18 @@
 
 ## 我为什么做这个项目
 
-我对 RAG 最感兴趣的，不只是它能不能生成一段看起来合理的回答，而是回答能否追溯到具体证据：检索结果能否复现，引用是否确实来自返回的证据，以及证据不足时系统是否愿意明确说“不知道”。因此，我把评测协议、语料哈希、逐样本轨迹和结构化拒答放在实现的核心位置，也如实记录测试集曾被查看等边界。这个项目是我对“可验证的 RAG 应该怎样设计”的一次工程化实践。
+这个项目起点很简单：RAG 给出一句像样的答案时，我还是想知道它到底找到了哪段材料。答案若回不到具体段落，读起来再顺也很难判断它靠不靠谱。
 
-项目校验语料来源，比较 BM25、TF-IDF、RRF Hybrid 与可选 CrossEncoder 重排，并保证每个回答引用都能在证据列表中找到；证据不足时，系统会明确拒答。
+所以这里把语料来源、检索结果和引用关系放在同一条线上检查。它比较 BM25、TF-IDF、RRF Hybrid 与可选 CrossEncoder 重排；引用必须来自页面返回的证据，分数不够就直接说明证据不足。测试集曾被查看这一限制也写在文档里。
 
-## 3 分钟设计速览
+## 我想检查什么
 
-| 设计关注点 | 对应实现证据 |
+| 想弄清的问题 | 这里怎么做 |
 | --- | --- |
-| 问题定义 | RAG 不只要“能回答”，还要能复现检索结果、校验引用，并在证据不足时安全拒答。 |
-| 数据协议 | 15 份带许可证、SHA-256 哈希锁定的英文技术文档；开发集（dev）与固定测试集（test）各 25 条，每组含 21 条证据标注与 4 条歧义/域外问题。拒答阈值只用开发集校准，可直接检查[语料清单](data/corpus/open_source_manifest.jsonl)。 |
-| 检索系统 | 同一分块上比较 BM25、词级 + 双词组 TF-IDF、RRF Hybrid；可选本地 `cross-encoder/ms-marco-MiniLM-L6-v2` 重排 Hybrid 的前 10 个候选，完整设置见[基准结果](docs/benchmark-results.md)。 |
-| 可信约束 | `answer` 的引用 ID 必须属于返回的证据；低置信度返回结构化 `abstain`。报告记录语料清单哈希、Git revision、配置、延迟与逐样本轨迹，对应实现见[证据约束服务](src/evidence_rag_bench/grounding/service.py)。 |
-| 工程交付 | FastAPI API、浏览器演示、可复现 CLI、pytest/ruff CI、机器可读 JSON 报告与[可交互架构图](docs/architecture/evidence-rag-bench-architecture.html)。 |
+| 同一问题能再跑一遍吗？ | 15 份带许可证的英文技术文档会在分块前做 SHA-256 哈希锁定；[语料清单](data/corpus/open_source_manifest.jsonl)和校验代码都在仓库中。 |
+| 为什么演示用 Hybrid？ | 在同一批分块上比较 BM25、词级 + 双词组 TF-IDF 与 RRF Hybrid。BM25 的覆盖率更高，Hybrid 保留正的 TF-IDF 相关性分数，能用于拒答；因此默认演示使用 Hybrid。可选本地 `cross-encoder/ms-marco-MiniLM-L6-v2` 只重排 Hybrid 前 10 个候选，设置见[基准结果](docs/benchmark-results.md)。 |
+| 引用真的来自这次返回的证据吗？ | `answer` 的引用 ID 必须属于返回的证据；低置信度返回结构化 `abstain`。具体规则在[证据约束服务](src/evidence_rag_bench/grounding/service.py)。 |
+| 某次运行到底发生了什么？ | 报告保留语料清单哈希、Git revision、配置、延迟和逐样本轨迹；还可查看[可交互架构图](docs/architecture/evidence-rag-bench-architecture.html)。 |
 
 ### 当前测试集快照结果（protocol v0.1，`k=3`）
 
@@ -47,11 +46,11 @@
 
 RRF Hybrid 在 Recall@3 上与 BM25 同为 0.90，并把 MRR@3 / nDCG@3 做到 0.67 / 0.73；它保留 TF-IDF 相关性信号，便于实现确定性的拒答阈值。CrossEncoder 将未四舍五入的 MRR@3 从 0.667 提升到 0.738、nDCG@3 从 0.728 提升到 0.769，但 Recall@3 从 0.905 降到 0.857，并带来约 400 ms p50、690 ms p95 的 CPU 延迟。
 
-这些数字的边界同样重要：语料规模只有 15 份文档；CrossEncoder 是相关性模型，不是蕴含校验器；引用 ID 有效不等于答案在语义上必然由引用支持。固定测试集的结果已经在开发过程中被查看，因此这里把它作为可复现回归集，而不包装成未见数据上的泛化证明。完整协议、失败案例和端到端拒答指标见[基准结果](docs/benchmark-results.md)。
+这里有几件事不能省略：语料只有 15 份文档；CrossEncoder 是相关性模型，不是蕴含校验器；引用 ID 有效也不代表答案必然由引用支持。测试集结果已在开发过程中被查看，所以当前结果只当作可复现的回归快照，不说成未见数据上的泛化证明。完整协议、失败案例和端到端拒答指标见[基准结果](docs/benchmark-results.md)。
 
 ## 架构
 
-[打开可交互架构图](docs/architecture/evidence-rag-bench-architecture.html)，查看请求、检索、证据约束与评测路径；其可审查的 [JSON 规范](docs/architecture/evidence-rag-bench.architecture.json) 与 HTML 一同纳入版本控制。
+[打开可交互架构图](docs/architecture/evidence-rag-bench-architecture.html)，查看请求、检索、证据约束与评测如何连起来；[JSON 源文件](docs/architecture/evidence-rag-bench.architecture.json)也一并保留，方便核对图里的说法。
 
 ```mermaid
 flowchart LR
@@ -183,7 +182,7 @@ curl -X POST http://127.0.0.1:8000/v1/ask \
 
 版本化 JSONL 用例按标准证据 ID 计算 Recall@k、MRR@k 与 nDCG@k。加载器拒绝重复案例 ID、重复规范化问题、跨数据集复用问题，以及与可回答性冲突的标签。拒答阈值只由开发集选择，测试集不会参与阈值校准。
 
-需要明确披露的是：项目早期曾查看测试集结果来比较检索器，测试集也随语料扩展从 8 条增加到 25 条；当前演示默认值参考过这些结果，所以它已经不是严格意义上的盲测集。本仓库将当前版本定位为可复现的回归快照。自 v0.1 起，新的模型和参数先在开发集确定；若测试集扩容，则提升 protocol version 并保留旧快照。新的泛化结论需要另建从未查看且封存的测试集。这个限制也记录在[决策日志](docs/decision-log.md)中。
+项目早期查看过测试集结果来比较检索器，测试集也随语料扩展从 8 条增加到 25 条。当前演示默认值参考过这些结果，它就不再是严格意义上的盲测集；这里把它当作可复现的回归快照。自 v0.1 起，新的模型和参数先在开发集确定；若测试集扩容，则提升 protocol version 并保留旧快照。要谈新的泛化结论，需要另建从未查看且封存的测试集。这个限制也记录在[决策日志](docs/decision-log.md)中。
 
 运行生成的报告写入忽略追踪的 `artifacts/reports/`，保留 `corpus_manifest_sha256`、`git_revision`、`created_at`、retriever 配置、metrics 与逐案例 trace，便于复查而不会把临时结果误当成源码。
 
