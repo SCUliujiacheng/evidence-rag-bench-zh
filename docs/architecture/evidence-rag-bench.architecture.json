@@ -8,7 +8,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/SCUliujiacheng/evidence-rag-bench-zh",
-      "revision": "7affaceaec01ef79643b747feb7544387a3c5146"
+      "revision": "94d18784a1ebbec0d7e1701ae3e2074d33f6c64f"
     },
     "views": [
       { "id": "request", "label": "证据约束回答路径", "focus": ["browser", "api", "retriever", "grounding"], "note": "问题要么获得证据，要么得到明确拒答。" },
