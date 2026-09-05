@@ -4,7 +4,7 @@
 
 ## 模型选择
 
-初始实验选用 [`cross-encoder/ms-marco-MiniLM-L6-v2`](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2)：一个拥有 22.7M 参数、采用 Apache-2.0 许可证的 passage-ranking CrossEncoder。model card 记录了它的 MS MARCO 训练数据与 `CrossEncoder` 推理接口。它是 semantic relevance re-ranker，**不是** factual-entailment verifier；本项目不会声称它能够证明答案得到证据支持。
+初始实验选用 [`cross-encoder/ms-marco-MiniLM-L6-v2`](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2)：一个拥有 22.7M 参数、采用 Apache-2.0 许可证的 passage-ranking CrossEncoder。model card 记录了它的 MS MARCO 训练数据与 `CrossEncoder` 推理接口。它只衡量语义相关性，不验证事实蕴含，也不能据此判断答案是否得到证据支持。
 
 ## 本地运行
 

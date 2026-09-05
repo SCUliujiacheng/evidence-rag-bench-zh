@@ -15,7 +15,7 @@ def test_homepage_is_chinese_and_explains_the_english_corpus() -> None:
     assert "固定语料 · 本地检索" in response.text
     assert "语料是英文技术文档" in response.text
     assert "查看相关段落" in response.text
-    assert "How does lexical retrieval work?" in response.text
+    assert "How can FAISS implement cosine similarity?" in response.text
 
 
 def test_openapi_operation_summaries_are_chinese() -> None:
