@@ -5,17 +5,26 @@ from collections.abc import Sequence
 from evidence_rag_bench.models import Chunk, RetrievedChunk
 from evidence_rag_bench.retrieval.bm25 import BM25Retriever
 from evidence_rag_bench.retrieval.tfidf import TfidfRetriever
+from evidence_rag_bench.retrieval.tokenization import Tokenizer, english_tokenize
 
 
 class HybridRetriever:
     """Fuse independent lexical rankings with reciprocal-rank fusion."""
 
-    def __init__(self, chunks: Sequence[Chunk], rrf_k: int = 60) -> None:
+    def __init__(
+        self,
+        chunks: Sequence[Chunk],
+        rrf_k: int = 60,
+        tokenizer: Tokenizer = english_tokenize,
+    ) -> None:
         if rrf_k < 1:
             raise ValueError("rrf_k must be at least one")
         self._chunks_by_id = {chunk.chunk_id: chunk for chunk in chunks}
-        self._bm25 = BM25Retriever(chunks)
-        self._tfidf = TfidfRetriever(chunks)
+        self._bm25 = BM25Retriever(chunks, tokenizer=tokenizer)
+        self._tfidf = TfidfRetriever(
+            chunks,
+            tokenizer=None if tokenizer is english_tokenize else tokenizer,
+        )
         self._rrf_k = rrf_k
 
     def search(self, query: str, k: int) -> list[RetrievedChunk]:

@@ -1,11 +1,15 @@
 import hashlib
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
+
+import pytest
 
 from evidence_rag_bench.evaluation.cases import EvaluationCase
 from evidence_rag_bench.evaluation.runner import (
     build_retriever,
+    main,
     run_grounded_benchmark,
     run_grounded_split,
     run_retrieval_benchmark,
@@ -82,7 +86,12 @@ def test_build_retriever_selects_semantic_reranker_with_an_injected_scorer() -> 
         )
     ]
 
-    retriever = build_retriever("semantic-rerank", chunks, semantic_scorer=Scorer())
+    retriever = build_retriever(
+        "semantic-rerank",
+        chunks,
+        semantic_scorer=Scorer(),
+        profile_id="en-v1",
+    )
 
     assert retriever.search("lexical", k=1)[0].stage == "rerank"
 
@@ -122,6 +131,7 @@ def test_run_split_accepts_a_named_manifest_and_case_file(tmp_path: Path) -> Non
         1,
         manifest_filename="custom.jsonl",
         case_filename="custom_dev.jsonl",
+        profile_id=None,
     )
 
     assert report.metrics["recall_at_1"] == 1.0
@@ -179,6 +189,7 @@ def test_run_grounded_split_writes_an_end_to_end_report() -> None:
         retriever_name="hybrid",
         manifest_filename="open_source_manifest.jsonl",
         case_filename="open_source_test.jsonl",
+        profile_id="en-v1",
     )
 
     assert report_path.is_file()
@@ -242,7 +253,173 @@ def test_run_grounded_split_records_threshold_calibrated_from_development_cases(
         manifest_filename="custom.jsonl",
         case_filename="custom_test.jsonl",
         calibration_case_filename="custom_dev.jsonl",
+        profile_id=None,
     )
 
     assert report.metadata["threshold_source"] == "custom_dev.jsonl"
     assert float(report.metadata["abstention_threshold"]) > 0.0
+
+
+def test_versioned_chinese_profile_selects_its_own_files_and_text_processing(
+    tmp_path: Path,
+) -> None:
+    corpus_dir = tmp_path / "data" / "corpus"
+    eval_dir = tmp_path / "data" / "eval"
+    corpus_dir.mkdir(parents=True)
+    eval_dir.mkdir(parents=True)
+    text_path = corpus_dir / "zh-source.md"
+    text_path.write_text("向量数据库可以存储并检索高维向量。", encoding="utf-8")
+    manifest = {
+        "doc_id": "zh-source",
+        "title": "中文资料",
+        "source_url": "https://example.org/zh-source.md",
+        "license": "MIT",
+        "retrieved_at": "2026-09-06",
+        "text_path": "data/corpus/zh-source.md",
+        "sha256": hashlib.sha256(text_path.read_bytes()).hexdigest(),
+        "scope_note": "fixture",
+    }
+    (corpus_dir / "zh_v1_manifest.jsonl").write_text(
+        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
+    )
+    case = {
+        "case_id": "zh-dev-001",
+        "split": "dev",
+        "question": "什么系统可以检索高维向量？",
+        "answerability": "answerable",
+        "gold_chunk_ids": ["zh-source:0000"],
+        "reference_answer": "向量数据库。",
+        "notes": "fixture",
+    }
+    (eval_dir / "zh_v1_dev.jsonl").write_text(
+        json.dumps(case, ensure_ascii=False), encoding="utf-8"
+    )
+
+    report, report_path = run_split(tmp_path, "dev", 1, profile_id="zh-v1")
+
+    assert report.metrics["recall_at_1"] == 1.0
+    assert report.metadata["profile"] == "zh-v1"
+    assert report.metadata["tokenizer"] == "cjk-bigram-latin-word"
+    assert report.metadata["chunking_mode"] == "unicode-window"
+    assert report.metadata["manifest_filename"] == "zh_v1_manifest.jsonl"
+    assert report.metadata["case_filename"] == "zh_v1_dev.jsonl"
+    expected_index_hash = hashlib.sha256(
+        b"zh-source\0" + text_path.read_bytes() + b"\0"
+    ).hexdigest()
+    assert report.metadata["indexed_corpus_sha256"] == expected_index_hash
+    assert report.metadata["index_scope"] == "full-document"
+    assert report_path.name == "zh-v1-bm25-dev.json"
+
+
+def test_chinese_profile_rejects_the_english_only_semantic_reranker() -> None:
+    chunks = [
+        Chunk(
+            doc_id="zh",
+            chunk_id="zh:0000",
+            source_url="https://example.org/zh",
+            text="中文向量检索",
+            ordinal=0,
+        )
+    ]
+
+    with pytest.raises(
+        ValueError,
+        match="semantic-rerank is not supported by profile zh-v1.*English-only",
+    ):
+        build_retriever("semantic-rerank", chunks, profile_id="zh-v1")
+
+
+def test_english_profile_keeps_the_v01_hybrid_regression_metrics() -> None:
+    project_root = Path(__file__).parents[2]
+
+    report, _ = run_split(project_root, "test", 3, retriever_name="hybrid", profile_id="en-v1")
+
+    assert report.metrics == pytest.approx(
+        {
+            "recall_at_3": 0.9047619047619048,
+            "mrr_at_3": 0.6666666666666666,
+            "ndcg_at_3": 0.727884691496607,
+        }
+    )
+
+
+def test_english_profile_keeps_the_v01_tfidf_regression_metrics() -> None:
+    project_root = Path(__file__).parents[2]
+
+    report, _ = run_split(project_root, "test", 3, retriever_name="tfidf", profile_id="en-v1")
+
+    assert report.metrics == pytest.approx(
+        {
+            "recall_at_3": 0.8571428571428571,
+            "mrr_at_3": 0.6190476190476191,
+            "ndcg_at_3": 0.6802656438775594,
+        }
+    )
+
+
+def test_runner_defaults_to_the_chinese_profile_in_the_chinese_repository() -> None:
+    project_root = Path(__file__).parents[2]
+
+    report, report_path = run_split(project_root, "test", 3, retriever_name="hybrid")
+
+    assert report.metadata["profile"] == "zh-v1"
+    assert report.metadata["manifest_filename"] == "zh_v1_manifest.jsonl"
+    assert report.metadata["index_scope"] == "milvus-readme-zh:end-before:### All contributors"
+    assert report_path.name == "zh-v1-hybrid-test.json"
+
+
+def test_cli_profile_flag_selects_the_versioned_corpus(monkeypatch, capsys) -> None:
+    project_root = Path(__file__).parents[2]
+    monkeypatch.chdir(project_root)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "evidence-rag-bench",
+            "--profile",
+            "en-v1",
+            "--split",
+            "test",
+            "--retriever",
+            "hybrid",
+            "--k",
+            "3",
+        ],
+    )
+
+    main()
+
+    output = json.loads(capsys.readouterr().out)
+    report = json.loads(Path(output["report_path"]).read_text(encoding="utf-8"))
+    assert report["metadata"]["profile"] == "en-v1"
+    assert report["metadata"]["manifest_filename"] == "open_source_manifest.jsonl"
+
+
+@pytest.mark.parametrize(
+    ("override_name", "override_value"),
+    [
+        ("manifest_filename", "open_source_manifest.jsonl"),
+        ("case_filename", "open_source_test.jsonl"),
+    ],
+)
+def test_profile_rejects_files_from_another_benchmark(
+    override_name: str, override_value: str
+) -> None:
+    project_root = Path(__file__).parents[2]
+    kwargs = {override_name: override_value}
+
+    with pytest.raises(ValueError, match="does not belong to profile zh-v1"):
+        run_split(project_root, "test", 3, profile_id="zh-v1", **kwargs)
+
+
+def test_profile_rejects_another_profiles_calibration_cases() -> None:
+    project_root = Path(__file__).parents[2]
+
+    with pytest.raises(ValueError, match="does not belong to profile zh-v1"):
+        run_grounded_split(
+            project_root,
+            "test",
+            3,
+            profile_id="zh-v1",
+            calibration_case_filename="open_source_dev.jsonl",
+        )

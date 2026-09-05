@@ -19,6 +19,7 @@ class DocumentRecord(BaseModel):
     text_path: str = Field(min_length=1)
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     scope_note: str = Field(min_length=1)
+    index_end_marker: str | None = Field(default=None, min_length=1)
 
 
 class Chunk(BaseModel):
