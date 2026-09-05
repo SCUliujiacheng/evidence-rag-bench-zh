@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Evidence RAG Bench｜证据驱动的 RAG 评测基准</h1>
+  <h1>Evidence RAG Bench｜RAG 检索与引用实验</h1>
   <p>把 RAG 找到的段落和引用摊开来看看。</p>
   <p>
     <a href="https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml"><img src="https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -7,11 +7,11 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2ea44f.svg" alt="MIT License"></a>
   </p>
   <p>
-    <a href="#我为什么做这个项目">为什么做</a> ·
-    <a href="#我想检查什么">我想检查什么</a> ·
+    <a href="#这个项目从哪儿来">项目起点</a> ·
+    <a href="#我具体测了什么">实验内容</a> ·
     <a href="#架构">架构</a> ·
     <a href="#本地运行">本地运行</a> ·
-    <a href="#评测边界与已知限制">评测边界</a> ·
+    <a href="#这些结果不能说明什么">结果边界</a> ·
     <a href="https://github.com/SCUliujiacheng/evidence-rag-bench">English</a>
   </p>
 </div>
@@ -20,13 +20,13 @@
   <img src="docs/screenshots/evidence-viewer-zh.png" alt="Evidence RAG Bench 中文演示界面" width="920">
 </p>
 
-## 我为什么做这个项目
+## 这个项目从哪儿来
 
-这个项目起点很简单：RAG 给出一句像样的答案时，我还是想知道它到底找到了哪段材料。答案若回不到具体段落，读起来再顺也很难判断它靠不靠谱。
+我想把一个问题弄清楚：RAG 回答得很顺时，它到底找到了什么？如果答案对应不到具体段落，我就没法判断检索是否真的命中。
 
-所以这里把语料来源、检索结果和引用关系放在同一条线上检查。它比较 BM25、TF-IDF、RRF Hybrid 与可选 CrossEncoder 重排；引用必须来自页面返回的证据，分数不够就直接说明证据不足。测试集曾被查看这一限制也写在文档里。
+我固定了一小套英文技术文档，在同一批分块上比较 BM25、TF-IDF、RRF Hybrid 与可选的 CrossEncoder 重排，并加了两条简单规则：引用只能指向本次返回的证据；分数不够就 `abstain`。测试集曾经被查看过，这件事也直接写在文档里。
 
-## 我想检查什么
+## 我具体测了什么
 
 | 想弄清的问题 | 这里怎么做 |
 | --- | --- |
@@ -44,9 +44,9 @@
 | RRF Hybrid | **0.90** | 0.67 | 0.73 |
 | Hybrid + MiniLM CrossEncoder re-rank | 0.86 | **0.74** | **0.77** |
 
-RRF Hybrid 在 Recall@3 上与 BM25 同为 0.90，并把 MRR@3 / nDCG@3 做到 0.67 / 0.73；它保留 TF-IDF 相关性信号，便于实现确定性的拒答阈值。CrossEncoder 将未四舍五入的 MRR@3 从 0.667 提升到 0.738、nDCG@3 从 0.728 提升到 0.769，但 Recall@3 从 0.905 降到 0.857，并带来约 400 ms p50、690 ms p95 的 CPU 延迟。
+RRF Hybrid 在 Recall@3 上与 BM25 同为 0.90，MRR@3 / nDCG@3 为 0.67 / 0.73。它还保留 TF-IDF 相关性分数，可以直接拿来设拒答阈值。CrossEncoder 将未四舍五入的 MRR@3 从 0.667 提升到 0.738、nDCG@3 从 0.728 提升到 0.769，但 Recall@3 从 0.905 降到 0.857，并带来约 400 ms p50、690 ms p95 的 CPU 延迟。
 
-这里有几件事不能省略：语料只有 15 份文档；CrossEncoder 是相关性模型，不是蕴含校验器；引用 ID 有效也不代表答案必然由引用支持。测试集结果已在开发过程中被查看，所以当前结果只当作可复现的回归快照，不说成未见数据上的泛化证明。完整协议、失败案例和端到端拒答指标见[基准结果](docs/benchmark-results.md)。
+先把分母说清楚：语料只有 15 份文档；CrossEncoder 是相关性模型，不是蕴含校验器；引用 ID 有效也不代表答案必然由引用支持。测试集结果已在开发过程中被查看，所以当前结果只当作回归快照。完整协议、失败案例和端到端拒答指标见[基准结果](docs/benchmark-results.md)。
 
 ## 架构
 
@@ -176,9 +176,9 @@ curl -X POST http://127.0.0.1:8000/v1/ask \
 
 </details>
 
-响应字段与协议值保持稳定：`status` 为 `answer` 或 `abstain`，并包含 `answer`、`reason`、`citations`、`evidence`、`latency_ms`、`trace_id` 与 `mode`。`answer` 响应中的 citation ID 必须引用返回的 evidence；`abstain` 不会编造引用。
+接口目前返回 `status`、`answer`、`reason`、`citations`、`evidence`、`latency_ms`、`trace_id` 与 `mode`。`status` 取 `answer` 或 `abstain`；回答中的 citation ID 必须指向本次返回的 evidence，拒答时则不生成引用。
 
-## 评测边界与已知限制
+## 这些结果不能说明什么
 
 版本化 JSONL 用例按标准证据 ID 计算 Recall@k、MRR@k 与 nDCG@k。加载器拒绝重复案例 ID、重复规范化问题、跨数据集复用问题，以及与可回答性冲突的标签。拒答阈值只由开发集选择，测试集不会参与阈值校准。
 

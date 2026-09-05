@@ -1,4 +1,4 @@
-"""Run BM25 retrieval benchmarks and write provenance-rich JSON reports."""
+"""Run retrieval benchmarks and write JSON reports with run metadata."""
 
 import argparse
 import hashlib
