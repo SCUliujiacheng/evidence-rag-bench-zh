@@ -9,14 +9,19 @@
   </head>
   <body>
     <main>
-      <p class="eyebrow">可复现 RAG 基准</p>
+      <p class="eyebrow">固定语料 · 本地检索</p>
       <h1>Evidence RAG Bench</h1>
-      <p class="lede">向固定语料库提问。每个回答都必须展示证据，否则系统会明确拒答。</p>
-      <p>当前固定语料为英文，请使用英文问题进行检索。</p>
+      <p class="lede">在固定语料里找证据；证据不够时，系统会直接说明。</p>
+      <p>默认语料是三份中文开源文档。也可以切回英文基准，两个版本各用各的开发集阈值。</p>
       <form id="ask-form" aria-label="证据检索">
-        <label for="question">英文问题</label>
-        <textarea id="question" required maxlength="1000" placeholder="How does lexical retrieval work?"></textarea>
-        <button type="submit">检索证据</button>
+        <label for="profile">语料版本</label>
+        <select id="profile" name="profile">
+          <option value="zh-v1" selected>中文语料（zh-v1）</option>
+          <option value="en-v1">英文语料（en-v1）</option>
+        </select>
+        <label for="question">问题</label>
+        <textarea id="question" required maxlength="1000" placeholder="Milvus 为什么同时支持流处理和批处理？"></textarea>
+        <button type="submit">查看相关段落</button>
       </form>
       <section id="result" aria-label="检索结果" aria-live="polite" hidden>
         <p id="status" class="status"></p>

@@ -1,0 +1,9 @@
+{"case_id":"zh-dev-001","split":"dev","question":"Milvus 主要解决什么问题？","answerability":"answerable","gold_chunk_ids":["milvus-readme-zh:0000"],"reference_answer":"它是面向 AI 应用和向量相似度搜索的开源向量数据库，用于加速非结构化数据检索。","notes":"用于校准的产品定位问题。"}
+{"case_id":"zh-dev-002","split":"dev","question":"Milvus 2.0 为什么把各组件设计成无状态？","answerability":"answerable","gold_chunk_ids":["milvus-readme-zh:0001"],"reference_answer":"为了增强系统弹性和灵活性。","notes":"用改写问题检查架构描述能否被找回。"}
+{"case_id":"zh-dev-003","split":"dev","question":"用飞桨做大模型训练和推理，为什么能少维护一套代码？","answerability":"answerable","gold_chunk_ids":["paddle-readme-zh:0004"],"reference_answer":"同一套框架支持训练和推理，可以复用代码并让两者无缝衔接。","notes":"用改写问题检查训推一体描述。"}
+{"case_id":"zh-dev-004","split":"dev","question":"飞桨的动静统一自动并行需要开发者在单卡代码上添加什么？","answerability":"answerable","gold_chunk_ids":["paddle-readme-zh:0003"],"reference_answer":"少量的张量切分标记。","notes":"检查自动并行的具体操作描述。"}
+{"case_id":"zh-dev-005","split":"dev","question":"飞桨怎样屏蔽不同芯片软件栈的接口差异？","answerability":"answerable","gold_chunk_ids":["paddle-readme-zh:0005"],"reference_answer":"通过标准化接口和可插拔架构。","notes":"检查异构硬件适配描述。"}
+{"case_id":"zh-dev-006","split":"dev","question":"AIR-Bench 怎么降低模型对固定测试集过拟合的风险？","answerability":"answerable","gold_chunk_ids":["flagembedding-readme-zh:0007"],"reference_answer":"用 LLM 自动生产评估数据并定期更新数据，减少对一套固定测试数据的依赖。","notes":"检查 AIR-Bench 的数据更新方法。"}
+{"case_id":"zh-dev-007","split":"dev","question":"PaddlePaddle 的哪项能力对所有工作负载都最好？","answerability":"ambiguous","gold_chunk_ids":[],"reference_answer":null,"notes":"文档列出多项能力，但没有适用于所有负载的唯一最佳项。"}
+{"case_id":"zh-dev-008","split":"dev","question":"飞桨异构多芯适配明确支持哪些芯片型号？","answerability":"insufficient","gold_chunk_ids":[],"reference_answer":null,"notes":"文档说明了多芯适配方式，却没有列出具体芯片型号。"}
+{"case_id":"zh-dev-009","split":"dev","question":"今天悉尼天气怎么样？","answerability":"unanswerable","gold_chunk_ids":[],"reference_answer":null,"notes":"实时天气不在这组固定技术语料中。"}

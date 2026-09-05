@@ -1,7 +1,7 @@
 [project]
 name = "evidence-rag-bench"
-version = "0.1.0"
-description = "可复现的证据约束 Retrieval-Augmented Generation（RAG）评测基准。"
+version = "0.2.0"
+description = "在中英文固定语料上检查检索、引用与拒答行为的小型实验。"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

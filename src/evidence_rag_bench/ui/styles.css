@@ -5,7 +5,9 @@ main { max-width: 760px; min-width: 0; margin: 0 auto; padding: 4rem 1.25rem; }
 h1 { font-size: clamp(2.2rem, 8vw, 4.5rem); margin: .2rem 0; }
 .lede { color: #536174; font-size: 1.1rem; }
 form, #result { min-width: 0; margin-top: 2rem; padding: 1.25rem; background: white; border: 1px solid #dce3ee; border-radius: .75rem; }
-label, textarea { display: block; width: 100%; box-sizing: border-box; }
+label, textarea, select { display: block; width: 100%; box-sizing: border-box; }
+label + select { margin: .5rem 0 1rem; }
+select { padding: .65rem .75rem; border: 1px solid #b8c3d4; border-radius: .4rem; background: white; font: inherit; }
 textarea { min-height: 6rem; margin: .5rem 0 1rem; padding: .75rem; font: inherit; }
 button { background: #1e4ec2; border: 0; border-radius: .4rem; color: white; cursor: pointer; font: inherit; padding: .7rem 1rem; }
 .status { color: #1e4ec2; font-weight: 800; letter-spacing: .06em; }

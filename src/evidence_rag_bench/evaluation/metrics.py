@@ -28,7 +28,7 @@ def retrieval_metrics(
             for position, chunk_id in enumerate(ranked_ids, start=1)
             if chunk_id in gold_ids
         ]
-        recall_total += float(bool(relevant_positions))
+        recall_total += len(set(ranked_ids) & gold_ids) / len(gold_ids)
         if relevant_positions:
             reciprocal_rank_total += 1 / relevant_positions[0]
         dcg = sum(1 / log2(position + 1) for position in relevant_positions)

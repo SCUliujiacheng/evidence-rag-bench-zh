@@ -8,36 +8,42 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/SCUliujiacheng/evidence-rag-bench-zh",
-      "revision": "94d18784a1ebbec0d7e1701ae3e2074d33f6c64f"
+      "revision": "7a222b43c8f7cfa2b97be81c88f5c1f35396bdbf"
     },
     "views": [
-      { "id": "request", "label": "证据约束回答路径", "focus": ["browser", "api", "retriever", "grounding"], "note": "问题要么获得证据，要么得到明确拒答。" },
-      { "id": "evaluation", "label": "可复现评测", "focus": ["corpus", "retriever", "benchmark", "reports"], "note": "哈希锁定的输入生成可报告的基准产物。" },
-      { "id": "semantic", "label": "可选语义阶段", "focus": ["retriever", "reranker", "benchmark"], "note": "CrossEncoder 重排固定候选，但保持为 opt-in。" }
+      { "id": "request", "label": "看一次请求", "focus": ["browser", "api", "grounding", "retriever"], "note": "跟着一个问题走到返回的证据，或一次明确拒答。" },
+      { "id": "profiles", "label": "切换语料配置", "focus": ["corpora", "profile", "preprocess", "retriever"], "note": "中英文各用自己的来源、分块、分词、题集和阈值。" },
+      { "id": "evaluation", "label": "复现一次评测", "focus": ["retriever", "benchmark", "reports"], "note": "指定 profile 后，报告会保留指标、逐题轨迹和输入哈希。" },
+      { "id": "semantic", "label": "英文重排实验", "focus": ["retriever", "reranker", "benchmark"], "note": "可选 MiniLM 只接受 en-v1，zh-v1 会明确报错。" }
     ]
   },
   "components": [
-    { "id": "browser", "type": "frontend", "label": "证据查看器", "sublabel": "静态浏览器 UI", "pos": [40, 285], "size": [145, 64], "sources": [{ "path": "src/evidence_rag_bench/ui/index.html" }] },
-    { "id": "api", "type": "backend", "label": "FastAPI 服务", "sublabel": "/v1/ask + 评测 API", "pos": [265, 285], "size": [165, 64], "sources": [{ "path": "src/evidence_rag_bench/api/app.py" }] },
-    { "id": "grounding", "type": "security", "label": "证据约束护栏", "sublabel": "引用校验 + 拒答", "pos": [515, 285], "size": [175, 64], "sources": [{ "path": "src/evidence_rag_bench/grounding/service.py" }] },
-    { "id": "retriever", "type": "backend", "label": "本地检索", "sublabel": "BM25 / TF-IDF / RRF Hybrid", "pos": [515, 120], "size": [175, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/hybrid.py" }] },
-    { "id": "reranker", "type": "cloud", "label": "可选 CrossEncoder", "sublabel": "本地 MiniLM 语义重排", "pos": [755, 120], "size": [185, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/rerank.py" }] },
-    { "id": "corpus", "type": "database", "label": "版本化语料库", "sublabel": "15 份含许可证、哈希锁定的来源", "pos": [265, 120], "size": [175, 64], "sources": [{ "path": "data/corpus/open_source_manifest.jsonl" }] },
-    { "id": "benchmark", "type": "backend", "label": "评测运行器", "sublabel": "dev 校准 + 固定 test 回归", "pos": [755, 285], "size": [185, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] },
-    { "id": "reports", "type": "database", "label": "JSON 报告", "sublabel": "指标、轨迹、来源信息", "pos": [1010, 285], "size": [160, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] }
+    { "id": "corpora", "type": "database", "label": "版本化语料", "sublabel": "15 份英文 + 3 份中文来源", "pos": [130, 110], "size": [170, 64], "sources": [{ "path": "data/corpus/open_source_manifest.jsonl", "label": "en-v1 清单" }, { "path": "data/corpus/zh_v1_manifest.jsonl", "label": "zh-v1 清单" }] },
+    { "id": "profile", "type": "backend", "label": "Profile 注册表", "sublabel": "en-v1 / zh-v1", "pos": [355, 110], "size": [170, 64], "sources": [{ "path": "src/evidence_rag_bench/profiles.py" }] },
+    { "id": "preprocess", "type": "backend", "label": "文本处理", "sublabel": "单词窗口 / Unicode 窗口", "pos": [580, 110], "size": [180, 64], "sources": [{ "path": "src/evidence_rag_bench/corpus/chunking.py" }, { "path": "src/evidence_rag_bench/retrieval/tokenization.py", "label": "profile 分词" }] },
+    { "id": "retriever", "type": "backend", "label": "本地检索", "sublabel": "BM25 / TF-IDF / RRF Hybrid", "pos": [805, 110], "size": [180, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/hybrid.py" }] },
+    { "id": "reranker", "type": "cloud", "label": "可选 MiniLM", "sublabel": "只重排 en-v1 候选", "pos": [1030, 110], "size": [180, 64], "sources": [{ "path": "src/evidence_rag_bench/retrieval/rerank.py" }] },
+    { "id": "browser", "type": "frontend", "label": "证据查看器", "sublabel": "配置选择 + 原文卡片", "pos": [130, 310], "size": [170, 64], "sources": [{ "path": "src/evidence_rag_bench/ui/index.html" }] },
+    { "id": "api", "type": "backend", "label": "FastAPI 服务", "sublabel": "/v1/ask + 评测 API", "pos": [355, 310], "size": [170, 64], "sources": [{ "path": "src/evidence_rag_bench/api/app.py" }] },
+    { "id": "grounding", "type": "security", "label": "证据约束", "sublabel": "引用校验 + 拒答", "pos": [580, 310], "size": [180, 64], "sources": [{ "path": "src/evidence_rag_bench/grounding/service.py" }] },
+    { "id": "benchmark", "type": "backend", "label": "评测运行器", "sublabel": "dev 校准 + 固定 test", "pos": [805, 310], "size": [180, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] },
+    { "id": "reports", "type": "database", "label": "JSON 报告", "sublabel": "指标、轨迹、输入哈希", "pos": [1030, 310], "size": [180, 64], "sources": [{ "path": "src/evidence_rag_bench/evaluation/runner.py" }] }
   ],
   "connections": [
-    { "id": "ask", "from": "browser", "to": "api", "label": "POST /v1/ask", "variant": "emphasis" },
-    { "id": "answer", "from": "api", "to": "grounding", "label": "answer 或 abstain", "variant": "security", "labelDy": 56 },
-    { "id": "retrieve", "from": "grounding", "to": "retriever", "label": "top-k 证据", "fromSide": "top", "toSide": "bottom" },
-    { "id": "index", "from": "corpus", "to": "retriever", "label": "确定性分块", "labelDy": 56 },
-    { "id": "rerank", "from": "retriever", "to": "reranker", "label": "可选候选", "variant": "dashed", "labelDy": -52 },
-    { "id": "evaluate", "from": "retriever", "to": "benchmark", "label": "检索轨迹", "fromSide": "right", "toSide": "top" },
-    { "id": "write", "from": "benchmark", "to": "reports", "label": "含来源信息的 JSON", "labelDy": 56 }
+    { "id": "ask", "from": "browser", "to": "api", "label": "POST /v1/ask", "labelAt": [328, 388], "variant": "emphasis" },
+    { "id": "choose", "from": "api", "to": "profile", "label": "选择 profile", "fromSide": "top", "toSide": "bottom" },
+    { "id": "check", "from": "api", "to": "grounding", "label": "问题 + top-k", "labelAt": [553, 388] },
+    { "id": "retrieve", "from": "grounding", "to": "retriever", "label": "检索证据", "fromSide": "top", "toSide": "bottom", "variant": "security" },
+    { "id": "load", "from": "corpora", "to": "profile", "label": "原文 + 清单", "labelAt": [328, 90] },
+    { "id": "prepare", "from": "profile", "to": "preprocess", "label": "分块与分词规则", "labelAt": [553, 90] },
+    { "id": "index", "from": "preprocess", "to": "retriever", "label": "稳定 chunk", "labelAt": [783, 90] },
+    { "id": "rerank", "from": "retriever", "to": "reranker", "label": "仅 en-v1", "labelAt": [1008, 90], "variant": "dashed" },
+    { "id": "evaluate", "from": "retriever", "to": "benchmark", "label": "逐题排名", "labelAt": [950, 270], "fromSide": "bottom", "toSide": "top" },
+    { "id": "write", "from": "benchmark", "to": "reports", "label": "版本化结果", "labelAt": [1008, 388] }
   ],
   "cards": [
-    { "dot": "emerald", "title": "信任边界", "items": ["每个返回的 citation 必须属于返回的 evidence", "低置信度时明确返回 abstention"] },
-    { "dot": "cyan", "title": "可复现性", "items": ["Manifest 哈希与稳定的 chunk ID", "阈值只使用开发集选择"] },
-    { "dot": "violet", "title": "模型边界", "items": ["默认词法路径无需 API key 或 GPU", "CrossEncoder 有实测结果且保持可选，不将其称为 entailment verifier"] }
+    { "dot": "cyan", "title": "两套 profile 不混库", "items": ["en-v1 保留原来的 15 文档英文评测", "zh-v1 有独立的 3 份文档、9+9 题、chunk 和阈值"] },
+    { "dot": "emerald", "title": "实际进入索引的内容", "items": ["上游原始文件继续做哈希锁定", "Milvus 贡献者头像尾部由显式 marker 排除，并另记索引字节哈希"] },
+    { "dot": "amber", "title": "护栏尚不能证明什么", "items": ["引用 ID 必须属于本次返回的证据", "词法相关性分数并不等于语义上足以回答"] }
   ]
 }
