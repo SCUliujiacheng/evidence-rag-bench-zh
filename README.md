@@ -68,6 +68,25 @@ flowchart LR
 
 需要 Python 3.12 与 [uv](https://docs.astral.sh/uv/)：
 
+**PowerShell**
+
+```powershell
+uv sync --python 3.12
+uv run pytest -v
+uv run python -m evidence_rag_bench.evaluation.runner `
+  --split dev `
+  --k 3 `
+  --retriever hybrid `
+  --manifest open_source_manifest.jsonl `
+  --cases open_source_dev.jsonl
+uv run uvicorn evidence_rag_bench.api.app:create_app `
+  --factory `
+  --port 8000
+```
+
+<details>
+<summary>Bash / Git Bash 等价命令</summary>
+
 ```bash
 uv sync --python 3.12
 uv run pytest -v
@@ -82,9 +101,37 @@ uv run uvicorn evidence_rag_bench.api.app:create_app \
   --port 8000
 ```
 
+</details>
+
 打开 `http://127.0.0.1:8000/`。当前固定语料为英文，因此演示问题也应使用英文；默认 Hybrid 路径不需要 API key 或 GPU。
 
+<details>
+<summary>旧 Windows 工作区出现语料 checksum mismatch</summary>
+
+新的字节保留规则会自动应用于全新检出。如果仓库是在该规则加入前检出的，请先确认 `git status --short -- data/corpus` 没有输出，再仅刷新一次受版本控制的语料文件：
+
+```text
+git rm -r --cached -- data/corpus
+git restore --source=HEAD --staged --worktree -- data/corpus
+```
+
+</details>
+
 复现可选的语义重排实验：
+
+```powershell
+uv sync --extra semantic --python 3.12
+uv run --extra semantic python `
+  -m evidence_rag_bench.evaluation.runner `
+  --split test `
+  --retriever semantic-rerank `
+  --k 3 `
+  --manifest open_source_manifest.jsonl `
+  --cases open_source_test.jsonl
+```
+
+<details>
+<summary>Bash / Git Bash 等价命令</summary>
 
 ```bash
 uv sync --extra semantic --python 3.12
@@ -97,9 +144,27 @@ uv run --extra semantic python \
   --cases open_source_test.jsonl
 ```
 
+</details>
+
 ## API 示例
 
 保留英文问题是有意为之：固定语料和词法基线均面向英文。
+
+```powershell
+$body = @{
+  question = "How can FAISS implement cosine similarity?"
+  top_k = 3
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/v1/ask" `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+<details>
+<summary>Bash / Git Bash 等价命令</summary>
 
 ```bash
 curl -X POST http://127.0.0.1:8000/v1/ask \
@@ -109,6 +174,8 @@ curl -X POST http://127.0.0.1:8000/v1/ask \
     "top_k": 3
   }'
 ```
+
+</details>
 
 响应字段与协议值保持稳定：`status` 为 `answer` 或 `abstain`，并包含 `answer`、`reason`、`citations`、`evidence`、`latency_ms`、`trace_id` 与 `mode`。`answer` 响应中的 citation ID 必须引用返回的 evidence；`abstain` 不会编造引用。
 
