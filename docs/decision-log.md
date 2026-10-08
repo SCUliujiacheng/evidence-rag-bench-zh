@@ -1,14 +1,14 @@
-# 决策日志
+# 检索实现笔记
 
-## 固定语料，而不是每次读取网页
+## 固定语料快照
 
-两套 manifest 都保存 source URL、许可证、获取日期、本地路径与 SHA-256；中文 `zh-v1` 还把 URL 锁到具体上游 commit。英文旧语料的 URL 仍指向分支，因此可复现依据是仓库内固定字节与哈希，不能把它说成 commit 锁定。许可证副本和正文分开保存，也不会被误索引。
+两套 manifest 都保存来源 URL、许可证、获取日期、本地路径与 SHA-256；中文 `zh-v1` 的 URL 还指向具体上游 commit。英文旧语料的 URL 指向分支，其复现依据是仓库内保存的文件字节与哈希。许可证副本单独保存，不参与索引。
 
 ## 中文和英文各自成为 profile
 
-加入中文语料时，我没有把中英文文件塞进一个索引。`zh-v1` 与 `en-v1` 各自绑定 manifest、dev/test、分块、分词和拒答阈值；runner 会拒绝与 profile 不匹配的文件覆盖。中文仓库默认 `zh-v1`，界面仍可切回 `en-v1` 做原结果回归。
+`zh-v1` 与 `en-v1` 各自绑定 manifest、dev/test、分块、分词和拒答阈值；runner 会拒绝与 profile 不匹配的文件覆盖。中文仓库默认 `zh-v1`，界面可以切回 `en-v1` 检查英文结果。
 
-这么做也把一个容易忽略的问题显式化了：同一组阈值不能跨语料照搬。API 启动时为两个 profile 分别建索引，只用各自 dev 选择阈值。
+两套语料的得分分布不同，阈值也需要分别选择。API 启动时为两个 profile 分别建索引，使用各自的 dev 集校准。
 
 ## 中文使用 Unicode 范围分块和混合 tokenizer
 
@@ -16,19 +16,19 @@
 
 ## 原始 Milvus 文件保留，索引在贡献者列表前停止
 
-第一次跑完整 Milvus README 时，129 个 chunk 中有 110 个来自贡献者头像 HTML。这不是有用语料，却占掉约三分之二的中文索引。
+完整 Milvus README 会产生 129 个 chunk，其中 110 个来自贡献者头像 HTML。这部分没有实验所需的技术内容，却占了约三分之二的中文索引。
 
-我没有修改下载文件或伪装它的 SHA。manifest 增加 `index_end_marker: "### All contributors"`，分块前在这里截断；marker 找不到就直接失败。报告另外记录实际索引字节的组合 SHA 和 `index_scope`。清理后 Milvus 为 16 个 chunk，中文索引合计 54 个。
+原文件完整保留，manifest 用 `index_end_marker: "### All contributors"` 指定索引结束位置；marker 找不到时直接报错。报告同时记录实际索引字节的组合 SHA 和 `index_scope`。限定范围后，Milvus 为 16 个 chunk，中文索引合计 54 个。
 
 ## 先比较本地检索器，再决定演示默认值
 
-BM25、TF-IDF 与 reciprocal-rank fusion 都在同一 profile 的相同 chunks 上运行。中文固定 test 中，TF-IDF 与 Hybrid 的 Recall@3 都是 1.00，BM25 因少找回一个独立相关片段而是 0.917；三者 MRR@3 都是 1.00，TF-IDF 与 Hybrid 的 nDCG@3 为 0.987。这么小的回归集不适合排一个笼统的“胜负”；我保留 Hybrid 作为默认值，是因为它同时保留两路排序，并给拒答规则提供 TF-IDF 相关性分数。
+BM25、TF-IDF 与 reciprocal-rank fusion 都在同一 profile 的相同 chunks 上运行。中文固定 test 中，TF-IDF 与 Hybrid 的 Recall@3 都是 1.00，BM25 因少找回一个独立相关片段而是 0.917；三者 MRR@3 都是 1.00，TF-IDF 与 Hybrid 的 nDCG@3 为 0.987。Hybrid 保留为默认值，是因为它能合并两路排序，并给拒答规则提供 TF-IDF 相关性分数。当前回归集太小，这些数值不足以确定通用的优劣。
 
 ## rank score 与拒答置信度分开
 
 RRF 分数描述名次，不适合直接当作置信度。系统保留独立的 TF-IDF relevance score，并且只在 dev 上选择阈值。中文 test 的 false-answer rate 仍为 0.67：明显 OOD 能被挡住，但“文档谈到了主题、却没给出所问细节”的问题可能得到高分。
 
-我没有用 test 反调阈值。页面将通过阈值的结果称为“找到相关证据，请核对下方原文”，避免把相关性阈值包装成答案正确性判断。
+阈值选择只使用 dev。页面展示通过阈值的原文片段，是否包含问题所需的依据仍要核对。
 
 ## MiniLM 只用于英文 profile
 
@@ -36,7 +36,7 @@ RRF 分数描述名次，不适合直接当作置信度。系统保留独立的 
 
 ## 引用 ID 有效不等于答案正确
 
-确定性 formatter 只保证 cited ID 属于本次返回的 evidence。这能回答“引用是不是凭空出现”，不能证明自然语言结论由 passage 蕴含。真要加入 semantic verifier，需要另做支持度标注，并用没有查看过的新数据验收。
+格式化输出时会检查每个引用 ID 是否属于本次返回的证据。这个检查可以发现不存在的引用，但无法验证结论是否由原文支持。加入语义验证器需要另做支持度标注，并在未参与开发的数据上评测。
 
 ## 当前 test 只作为固定回归
 

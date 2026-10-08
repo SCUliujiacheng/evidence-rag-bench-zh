@@ -1,6 +1,6 @@
 # 基准结果
 
-## 我怎么跑这组实验
+## 实验设置
 
 仓库现在有两个互不混用的 profile：
 
@@ -53,9 +53,9 @@ Hybrid 的阈值只从 `zh_v1_dev.jsonl` 选择，为 `0.17540169967732244`。�
 - `zh-test-008` 问飞桨自动并行到底使用哪一种搜索算法。原文只说会搜索高效策略，没有算法名称；相关词足够多，同样被放行。
 - `zh-test-001` 的 gold 证据存在，但 top score 低于 dev 阈值，形成一次错误拒答。
 
-这说明 score-only guard 能识别明显 OOD，却不能可靠地区分“主题相关”和“所问细节已由原文支持”。把阈值在 test 上调到刚好遮住两个失败题，会让回归数字更好看，但会泄漏测试集；这里没有这样做。界面也只把 `status=answer` 解释为“找到相关证据，请核对原文”。
+当前阈值能拒绝明显域外问题，但对主题相关、细节缺失的问题仍有误判。这里保留 dev 选出的阈值，test 只用于记录结果。界面中的 `status=answer` 表示返回了相关原文，仍需要核对其内容。
 
-## 英文回归没有被中文支持改坏
+## 英文检索结果
 
 `en-v1` 仍使用原来的文件、80/20 分块和英文 tokenizer。Hybrid 固定 test 结果保持为：Recall@3 `0.9047619048`、MRR@3 `0.6666666667`、nDCG@3 `0.7278846915`。
 
@@ -66,9 +66,9 @@ Hybrid 的阈值只从 `zh_v1_dev.jsonl` 选择，为 `0.17540169967732244`。�
 | RRF Hybrid | 0.90 | 0.67 | 0.73 |
 | Hybrid + MiniLM CrossEncoder | 0.86 | 0.74 | 0.77 |
 
-MiniLM 实验只属于 `en-v1`。`cross-encoder/ms-marco-MiniLM-L6-v2` 面向英文 MS MARCO；对 `zh-v1` 请求 `semantic-rerank` 会明确报错，而不是输出不可解释的跨语言比较。
+MiniLM 实验只属于 `en-v1`。`cross-encoder/ms-marco-MiniLM-L6-v2` 面向英文 MS MARCO；对 `zh-v1` 请求 `semantic-rerank` 会报错。
 
-## 怎么复现
+## 复现命令
 
 ```bash
 uv run python -m evidence_rag_bench.evaluation.runner --profile zh-v1 --split dev --k 3 --retriever bm25
@@ -82,6 +82,6 @@ uv run python -m evidence_rag_bench.evaluation.runner --profile zh-v1 --split te
 
 报告写进 `artifacts/reports/`，其中 `corpus_manifest_sha256` 对应完整 manifest，`indexed_corpus_sha256` 对应真正送进分块器的字节，`index_scope` 则写清截断位置。
 
-## 这不是 held-out 成绩
+## 测试集的使用范围
 
 中文 test 的题目和运行结果在实现过程中已经被查看，英文 test 也在早期用于比较检索器。它们现在都是固定回归快照，不是仍然封存的盲测集。这里的数字只能说明当前代码在这组输入上的行为；如果要比较新模型或声称泛化，应该先冻结一份从未查看的新测试集，再只用 dev 做选择。
