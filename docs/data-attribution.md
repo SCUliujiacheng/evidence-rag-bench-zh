@@ -24,13 +24,13 @@
 
 ### 原始快照与实际索引范围
 
-Milvus README 在正文后附有很长的贡献者头像 HTML。为同时保留上游快照和干净的检索输入，我没有裁剪本地文件：manifest 中的原始 SHA-256 仍覆盖完整 64,886 字节。建索引时则读取显式字段：
+Milvus README 在正文后附有很长的贡献者头像 HTML。本地保存完整的 64,886 字节，manifest 中的原始 SHA-256 覆盖整个文件。索引范围由以下字段指定：
 
 ```json
 {"doc_id":"milvus-readme-zh","index_end_marker":"### All contributors"}
 ```
 
-分块器只索引 marker 前的原始字节；marker 缺失会报错，不会悄悄改成全文索引。PaddlePaddle 与 FlagEmbedding 使用全文。三份文档最终产生 54 个 chunk（16 + 8 + 30），组合 `indexed_corpus_sha256` 为：
+分块器只索引 marker 前的原始字节；marker 缺失时会报错。PaddlePaddle 与 FlagEmbedding 使用全文。三份文档最终产生 54 个 chunk（16 + 8 + 30），组合 `indexed_corpus_sha256` 为：
 
 ```text
 4eee4a7e0b302febe9570533c94c722e46f3335a7164c13523615b5a96ca7ef6

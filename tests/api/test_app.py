@@ -12,12 +12,12 @@ def test_homepage_defaults_to_the_chinese_corpus_and_offers_both_profiles() -> N
 
     assert response.status_code == 200
     assert '<html lang="zh-CN">' in response.text
-    assert "固定语料 · 本地检索" in response.text
-    assert "中文开源文档" in response.text
+    assert "检索实验" in response.text
+    assert "输入一个问题，对照返回的段落检查出处。" in response.text
     assert '<select id="profile"' in response.text
     assert '<option value="zh-v1" selected>' in response.text
     assert '<option value="en-v1">' in response.text
-    assert "查看相关段落" in response.text
+    assert 'class="submit-button" type="submit">检索</button>' in response.text
     assert "Milvus 为什么同时支持流处理和批处理？" in response.text
 
 
@@ -138,11 +138,11 @@ def test_homepage_uses_a_plain_explanation_of_the_evidence_boundary() -> None:
     javascript = TestClient(create_app(project_root)).get("/app.js")
 
     assert response.status_code == 200
-    assert "在固定语料里找证据；证据不够时，系统会直接说明。" in response.text
-    assert "查看相关段落" in response.text
-    assert "已找到相关证据，请核对下方原文" in javascript.text
+    assert "相关性分数不能判断一段材料是否足以回答问题。" in response.text
+    assert "还没有检索结果。" in response.text
+    assert "找到相关段落，请核对原文。" in javascript.text
     assert "function readableSource(text)" in javascript.text
-    assert "excerpt(item.text)" in javascript.text
+    assert 'element("pre", item.text)' in javascript.text
 
 
 def test_demo_styles_allow_long_evidence_to_wrap_on_mobile() -> None:
@@ -163,4 +163,4 @@ def test_demo_handles_blank_and_structured_api_errors_in_chinese() -> None:
     assert "问题不能只包含空白字符" in response.text
     assert 'typeof body.detail === "string"' in response.text
     assert "问题格式不对，检查一下再试" in response.text
-    assert 'profile: document.querySelector("#profile").value' in response.text
+    assert "profile: selectedProfile" in response.text

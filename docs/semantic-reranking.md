@@ -2,7 +2,7 @@
 
 默认路径保持确定性，也尽量少加依赖。这个可选阶段用本地 CrossEncoder 对固定的词法候选集重排；它不生成答案、不修改语料，也不放宽引用校验。
 
-这项实验只属于 `en-v1`。当前 `cross-encoder/ms-marco-MiniLM-L6-v2` 面向英文 MS MARCO，运行器会明确拒绝 `--profile zh-v1 --retriever semantic-rerank`，不会把英文模型的分数当成中文基准。
+这项实验只使用 `en-v1`。当前 `cross-encoder/ms-marco-MiniLM-L6-v2` 面向英文 MS MARCO，运行器会拒绝 `--profile zh-v1 --retriever semantic-rerank`。
 
 ## 模型选择
 
@@ -18,8 +18,8 @@ uv run --extra semantic python -m evidence_rag_bench.evaluation.runner \
 
 `SentenceTransformersCrossEncoder` 会延迟加载指定模型，因此 CI 与默认演示不会下载模型权重。报告在现有词法配置之外记录模型标识与候选深度。运行只使用开发集选择阈值；当前 test 快照只用于回归报告，不在其上重新调参。
 
-## 验收门槛
+## 本次结果
 
 当前 CPU 实验使用 15 份文档、版本化的 25 条 test 案例以及 10 个候选，将 Hybrid MRR@3 从 0.667 提升到 0.738，nDCG@3 从 0.728 提升到 0.769，而 Recall@3 从 0.905 降到 0.857。使用开发集选择阈值后，错误回答率从 0.75 降到 0.00，拒答召回率从 0.25 提升到 1.00；本机这次运行的 p50 延迟约 410 ms。完整数据与限制见[基准结果](benchmark-results.md)。
 
-Hybrid 仍是默认检索器：BM25 在检索覆盖率上仍然领先，CrossEncoder 会增加 CPU 延迟，而且相关性高不等于答案被证据蕴含。
+Hybrid 仍是默认检索器：它与 BM25 在英文 test 上的 Recall@3 相同，CrossEncoder 增加了 CPU 延迟，也仍需另做答案支持度检查。
