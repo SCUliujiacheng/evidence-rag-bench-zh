@@ -1,9 +1,10 @@
 # 下载与安装
 
 从 [GitHub Releases](https://github.com/SCUliujiacheng/evidence-rag-bench-zh/releases)
-选择 `v0.3.0` 预发布版。发布页列出各平台成功构建的附件、运行检查报告和
-`SHA256SUMS` 校验文件。自动生成的 “Source code” 压缩包用于开发，直接使用请
-选择下表中的应用附件。
+选择 `v0.3.0` 预发布版。发布页附有下表中的四个应用包、`SHA256SUMS.txt`
+校验文件和 `build-manifest.json` 构建清单。运行检查报告保存在对应 GitHub Actions
+运行的 artifacts 中，不属于 Release 附件。自动生成的 “Source code” 压缩包
+用于开发，直接使用请选择下表中的应用附件。
 
 | 设备 | 应用附件 |
 | --- | --- |
@@ -19,7 +20,7 @@ Windows 请完整解压 ZIP，保留可执行文件旁的 `_internal` 文件夹�
 
 首批附件是预览版：Windows 尚无发布者证书，macOS 尚未完成 Developer ID
 签名和公证。系统可能显示未知发布者提示或阻止打开。请先核对仓库、版本和
-`SHA256SUMS`，再决定是否允许运行预览版本。自动运行检查不代表已通过真机认证。
+`SHA256SUMS.txt`，再决定是否允许运行预览版本。自动运行检查不代表已通过真机认证。
 
 Android 下载 APK 后，用系统安装器打开。系统可能要求允许当前下载应用安装
 其他来源的应用。这是独立离线应用，不是应用商店页面；只支持 64 位设备，
