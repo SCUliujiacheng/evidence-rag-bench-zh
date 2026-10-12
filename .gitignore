@@ -8,3 +8,9 @@ artifacts/
 docs/architecture/*.visual-check.*
 data/corpus/open_source/sklearn-contributing.rst
 *.py[cod]
+build/
+dist/
+bundle-*/
+android/.gradle/
+android/**/build/
+android/local.properties

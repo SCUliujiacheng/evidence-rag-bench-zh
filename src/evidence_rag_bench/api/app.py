@@ -53,10 +53,10 @@ class AppServices:
     default_profile: ProfileId
 
 
-def build_services(project_root: Path | None) -> AppServices:
+def build_services(project_root: Path | None, artifacts_dir: Path | None = None) -> AppServices:
     """Build independent indexes and development-set thresholds for every profile."""
 
-    settings = get_settings(project_root)
+    settings = get_settings(project_root, artifacts_dir)
     runtimes: dict[ProfileId, ProfileServices] = {}
     for profile_id, profile in PROFILES.items():
         records = load_manifest(settings.corpus_dir / profile.manifest_filename)
@@ -93,16 +93,22 @@ def build_services(project_root: Path | None) -> AppServices:
     )
 
 
-def create_app(project_root: Path | None = None) -> FastAPI:
+def create_app(
+    project_root: Path | None = None,
+    *,
+    artifacts_dir: Path | None = None,
+    ui_dir: Path | None = None,
+    build_revision: str | None = None,
+) -> FastAPI:
     """Create a local API and static evidence viewer."""
 
-    services = build_services(project_root)
+    services = build_services(project_root, artifacts_dir)
     app = FastAPI(
         title="Evidence RAG Bench｜证据检索评测台",
         description="可复现的本地 RAG 检索、原文核对与评测 API。",
-        version="0.2.0",
+        version="0.3.0",
     )
-    ui_dir = Path(__file__).parents[1] / "ui"
+    ui_dir = ui_dir or Path(__file__).parents[1] / "ui"
 
     @app.get("/health", summary="检查服务状态")
     def health() -> dict[str, object]:
@@ -142,6 +148,8 @@ def create_app(project_root: Path | None = None) -> FastAPI:
             request.k,
             retriever_name="hybrid",
             profile_id=request.profile,
+            artifacts_dir=services.settings.artifacts_dir,
+            build_revision=build_revision,
         )
         report_id = f"{request.profile}-{request.split}"
         return {"report_id": report_id, "report_path": str(report_path), "report": report}

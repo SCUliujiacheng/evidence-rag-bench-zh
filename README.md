@@ -2,6 +2,8 @@
 
 一个中英文检索实验，记录命中的原文、排序和拒答结果。
 
+[下载应用](https://github.com/SCUliujiacheng/evidence-rag-bench-zh/releases) · [安装说明](docs/downloads.md)
+
 [English](https://github.com/SCUliujiacheng/evidence-rag-bench) · [实验记录](docs/benchmark-results.md) · [设计笔记](docs/decision-log.md) · [CI](https://github.com/SCUliujiacheng/evidence-rag-bench-zh/actions/workflows/ci.yml)
 
 检索到一段相关文档以后，还有一个问题：它有没有给出问题所要的细节？例如，飞桨的文档提到自动并行会搜索高效策略，却没有写明具体的搜索算法。这样的片段可以有很高的检索分数，但仍不足以回答算法名称。
@@ -32,6 +34,9 @@
 拒答检查暴露了另一个问题：Hybrid 在 3 道不应回答的题目中放行了 2 道，包括开头的飞桨问题；同时误拒绝了 1 道可回答的问题。阈值来自 dev 集，为 `0.175402`。这组结果说明，在当前语料上，词法分数可以找对主题，却不足以判断细节是否齐全。[完整实验记录](docs/benchmark-results.md)保留了每类指标和失败案例。
 
 ## 本地运行
+
+[桌面版与 Android 版说明](docs/download-editions.md)介绍离线下载版的使用方式、
+报告存放位置，以及手机端支持的范围。
 
 需要 Python 3.12 和 [uv](https://docs.astral.sh/uv/)。以下命令在 PowerShell 和 Bash 中均可直接运行：
 

@@ -1,6 +1,6 @@
 [project]
 name = "evidence-rag-bench"
-version = "0.2.0"
+version = "0.3.0"
 description = "在中英文固定语料上检查检索、引用与拒答行为的小型实验。"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -18,6 +18,9 @@ semantic = [
 ]
 
 [dependency-groups]
+build = [
+    "pyinstaller>=6.16,<7",
+]
 dev = [
     "httpx>=0.27",
     "pytest>=8.3",
@@ -39,3 +42,8 @@ filterwarnings = [
 target-version = "py312"
 line-length = 100
 extend-exclude = ["docs"]
+
+[tool.ruff.lint.per-file-ignores]
+# The shared transport boundaries intentionally contain unexpected adapter errors.
+"distribution/desktop_launcher.py" = ["BLE001"]
+"distribution/portable_host.py" = ["BLE001", "TRY004"]

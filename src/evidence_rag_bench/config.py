@@ -14,13 +14,13 @@ class Settings:
     eval_dir: Path
 
 
-def get_settings(project_root: Path | None = None) -> Settings:
+def get_settings(project_root: Path | None = None, artifacts_dir: Path | None = None) -> Settings:
     """Return repository paths rooted at ``project_root`` or the current directory."""
 
     root = (project_root or Path.cwd()).resolve()
     return Settings(
         project_root=root,
-        artifacts_dir=root / "artifacts",
+        artifacts_dir=artifacts_dir.resolve() if artifacts_dir else root / "artifacts",
         corpus_dir=root / "data" / "corpus",
         eval_dir=root / "data" / "eval",
     )
