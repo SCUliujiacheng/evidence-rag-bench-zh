@@ -1,3 +1,4 @@
 # Corpus manifests and source snapshots are byte-locked for reproducible hashes.
 data/corpus/** -text
 android/gradlew text eol=lf
+licenses/** -text

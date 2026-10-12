@@ -15,6 +15,7 @@ if str(ROOT / "src") not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from distribution.collect_licenses import collect_licenses
 from distribution.resource_staging import reset_resources
 
 
@@ -150,3 +151,8 @@ if __name__ == "__main__":
     parser.add_argument("--output-root", type=Path)
     arguments = parser.parse_args()
     prepare(output_root=arguments.output_root)
+    collect_licenses(
+        ROOT,
+        (arguments.output_root or ROOT / "android/app/build/generated") / "assets/application",
+        target="android",
+    )
