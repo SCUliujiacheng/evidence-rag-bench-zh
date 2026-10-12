@@ -41,6 +41,7 @@ Android 只允许应用内部页面导航，GitHub 和“原文”链接不会�
 | Windows | `%LOCALAPPDATA%\evidence-rag-bench-zh\artifacts\reports` |
 | macOS | `~/Library/Application Support/evidence-rag-bench-zh/artifacts/reports` |
 
-手机版不保存问题或答案，运行文件位于应用私有存储。替换桌面应用文件夹不会
+手机版不保存问题或答案，运行文件位于应用私有存储；应用禁用 Android 系统云备份
+和设备间数据迁移。替换桌面应用文件夹不会
 删除用户数据目录；删除用户目录或卸载 Android 应用前，请先另外保存需要保留
 的报告或文件。应用不会向安装资源目录写入评测报告。
